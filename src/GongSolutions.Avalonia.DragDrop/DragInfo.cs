@@ -16,7 +16,9 @@ public sealed class DragInfo : IDragInfo
     {
         VisualSource = source;
         DragStartPosition = eventArgs.GetPosition(source);
-        VisualSourceItem = (eventArgs.Source as Visual)?.FindAncestorOfType<ListBoxItem>(true);
+        var sourceVisual = eventArgs.Source as Visual;
+        VisualSourceItem = sourceVisual?.FindAncestorOfType<ListBoxItem>(true)
+                   ?? (Control?)sourceVisual?.FindAncestorOfType<TreeViewItem>(true);
 
         if (source is ListBox listBox)
         {
@@ -27,6 +29,14 @@ public sealed class DragInfo : IDragInfo
                 ? selectedItems
                 : clickedItem is null ? Array.Empty<object>() : new[] { clickedItem };
         }
+            else if (VisualSourceItem is TreeViewItem treeViewItem)
+            {
+                var itemsParent = ItemsControl.ItemsControlFromItemContainer(treeViewItem);
+                SourceCollection = itemsParent?.ItemsSource as IEnumerable ?? Array.Empty<object>();
+                SourceItems = treeViewItem.DataContext is null
+                ? Array.Empty<object>()
+                : new[] { treeViewItem.DataContext };
+            }
         else
         {
             SourceCollection = Array.Empty<object>();

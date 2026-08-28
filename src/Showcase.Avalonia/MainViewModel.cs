@@ -17,9 +17,26 @@ public sealed class MainViewModel
         }
 
         IsolatedItems.Add(new ItemModel(201, "Isolated context"));
+
+        TreeItems.Add(new TreeNodeModel(
+            "Projects",
+            new TreeNodeModel(
+                "Avalonia",
+                new TreeNodeModel("Controls"),
+                new TreeNodeModel("Themes")),
+            new TreeNodeModel(
+                "Libraries",
+                new TreeNodeModel("Drag and drop"),
+                new TreeNodeModel("Utilities"))));
+        TreeItems.Add(new TreeNodeModel(
+            "Documents",
+            new TreeNodeModel("Notes"),
+            new TreeNodeModel("Archive")));
+        TreeItems.Add(new TreeNodeModel("Inbox"));
     }
 
     public ObservableCollection<ItemModel> SourceItems { get; } = new();
     public ObservableCollection<ItemModel> TargetItems { get; } = new();
     public ObservableCollection<ItemModel> IsolatedItems { get; } = new();
+    public ObservableCollection<TreeNodeModel> TreeItems { get; } = new();
 }

@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 
 namespace GongSolutions.Avalonia.DragDrop;
 
@@ -46,16 +48,39 @@ public class DefaultDropHandler : IDropTarget
 
         foreach (var item in data)
         {
-            destination.Insert(insertIndex++, item);
+            var itemToInsert = copy && item is ICloneable cloneable
+                ? cloneable.Clone()
+                : item;
+            destination.Insert(insertIndex++, itemToInsert);
         }
     }
 
     public static bool CanAcceptData(IDropInfo dropInfo)
     {
-        return dropInfo.DragInfo is not null
-               && dropInfo.Data is not null
-               && dropInfo.TargetCollection is IList
-               && dropInfo.IsSameDragDropContextAsSource;
+        if (dropInfo.DragInfo is null
+            || dropInfo.Data is null
+            || dropInfo.TargetCollection is not IList
+            || !dropInfo.IsSameDragDropContextAsSource)
+        {
+            return false;
+        }
+
+        if (dropInfo.DragInfo.VisualSourceItem is TreeViewItem sourceItem
+            && dropInfo.VisualTargetItem is TreeViewItem targetItem)
+        {
+            if (targetItem.GetVisualAncestors().Contains(sourceItem))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(sourceItem, targetItem)
+                && ReferenceEquals(dropInfo.TargetCollection, targetItem.ItemsSource))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public static IEnumerable<object> ExtractData(object? data)

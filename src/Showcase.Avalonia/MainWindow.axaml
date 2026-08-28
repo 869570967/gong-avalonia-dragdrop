@@ -37,6 +37,15 @@
         <Style Selector="ListBoxItem">
             <Setter Property="Padding" Value="10,8" />
         </Style>
+        <Style Selector="TreeView.dragTree">
+            <Setter Property="MinHeight" Value="320" />
+            <Setter Property="Background" Value="#F9FAFB" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="TreeView.dragTree TreeViewItem">
+            <Setter Property="IsExpanded" Value="True" />
+        </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto" Margin="28" RowSpacing="18">
@@ -44,58 +53,85 @@
             <TextBlock Classes="eyebrow" Text="AVALONIA 12.1.1" />
             <TextBlock FontSize="28" FontWeight="SemiBold" Text="Drag and drop showcase" />
             <TextBlock Foreground="#4B5563"
-                       Text="Drag within a list to reorder, between lists to move, or hold Ctrl to copy." />
+                       Text="Reorder list items or move tree nodes between levels. Hold Ctrl to copy." />
         </StackPanel>
 
-        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="18">
-            <Border Classes="listPanel">
-                <Grid RowDefinitions="Auto,*" RowSpacing="12">
-                    <StackPanel>
-                        <TextBlock Classes="heading" Text="Source collection" />
-                        <TextBlock Foreground="#6B7280" Text="Multiple selection supported" />
-                    </StackPanel>
-                    <ListBox Grid.Row="1"
-                             Classes="dragList"
-                             ItemsSource="{Binding SourceItems}"
-                             dd:DragDrop.DragDropContext="Main"
-                             dd:DragDrop.IsDragSource="True"
-                             dd:DragDrop.IsDropTarget="True">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="local:ItemModel">
-                                <Grid ColumnDefinitions="38,*">
-                                    <TextBlock Foreground="#9CA3AF" Text="{Binding Index}" />
-                                    <TextBlock Grid.Column="1" Text="{Binding Caption}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </Grid>
-            </Border>
+        <TabControl Grid.Row="1">
+            <TabItem Header="Lists">
+                <Grid Margin="0,12,0,0" ColumnDefinitions="*,*" ColumnSpacing="18">
+                    <Border Classes="listPanel">
+                        <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                            <StackPanel>
+                                <TextBlock Classes="heading" Text="Source collection" />
+                                <TextBlock Foreground="#6B7280" Text="Multiple selection supported" />
+                            </StackPanel>
+                            <ListBox Grid.Row="1"
+                                     Classes="dragList"
+                                     ItemsSource="{Binding SourceItems}"
+                                     dd:DragDrop.DragDropContext="Main"
+                                     dd:DragDrop.IsDragSource="True"
+                                     dd:DragDrop.IsDropTarget="True">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="local:ItemModel">
+                                        <Grid ColumnDefinitions="38,*">
+                                            <TextBlock Foreground="#9CA3AF" Text="{Binding Index}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Caption}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Border>
 
-            <Border Grid.Column="1" Classes="listPanel">
-                <Grid RowDefinitions="Auto,*" RowSpacing="12">
-                    <StackPanel>
-                        <TextBlock Classes="heading" Text="Target collection" />
-                        <TextBlock Foreground="#6B7280" Text="Drop before or after an item" />
-                    </StackPanel>
-                    <ListBox Grid.Row="1"
-                             Classes="dragList"
-                             ItemsSource="{Binding TargetItems}"
-                             dd:DragDrop.DragDropContext="Main"
-                             dd:DragDrop.IsDragSource="True"
-                             dd:DragDrop.IsDropTarget="True">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="local:ItemModel">
-                                <Grid ColumnDefinitions="38,*">
-                                    <TextBlock Foreground="#9CA3AF" Text="{Binding Index}" />
-                                    <TextBlock Grid.Column="1" Text="{Binding Caption}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                    <Border Grid.Column="1" Classes="listPanel">
+                        <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                            <StackPanel>
+                                <TextBlock Classes="heading" Text="Target collection" />
+                                <TextBlock Foreground="#6B7280" Text="Drop before or after an item" />
+                            </StackPanel>
+                            <ListBox Grid.Row="1"
+                                     Classes="dragList"
+                                     ItemsSource="{Binding TargetItems}"
+                                     dd:DragDrop.DragDropContext="Main"
+                                     dd:DragDrop.IsDragSource="True"
+                                     dd:DragDrop.IsDropTarget="True">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="local:ItemModel">
+                                        <Grid ColumnDefinitions="38,*">
+                                            <TextBlock Foreground="#9CA3AF" Text="{Binding Index}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Caption}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Border>
                 </Grid>
-            </Border>
-        </Grid>
+            </TabItem>
+
+            <TabItem Header="Tree">
+                <Border Margin="0,12,0,0" Classes="listPanel">
+                    <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                        <StackPanel>
+                            <TextBlock Classes="heading" Text="Tree collection" />
+                            <TextBlock Foreground="#6B7280" Text="Drop near an edge to reorder, or in the center to add a child" />
+                        </StackPanel>
+                        <TreeView Grid.Row="1"
+                                  Classes="dragTree"
+                                  ItemsSource="{Binding TreeItems}"
+                                  dd:DragDrop.DragDropContext="Main"
+                                  dd:DragDrop.IsDragSource="True"
+                                  dd:DragDrop.IsDropTarget="True">
+                            <TreeView.ItemTemplate>
+                                <TreeDataTemplate x:DataType="local:TreeNodeModel" ItemsSource="{Binding Children}">
+                                    <TextBlock Padding="8,5" Text="{Binding Caption}" />
+                                </TreeDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </Grid>
+                </Border>
+            </TabItem>
+        </TabControl>
 
         <Border Grid.Row="2"
                 Padding="12"

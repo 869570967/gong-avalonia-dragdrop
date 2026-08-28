@@ -34,6 +34,38 @@ public sealed class DropInfo : IDropInfo
                 InsertIndex = listBox.ItemCount;
             }
         }
+        else if (target is TreeView treeView)
+        {
+            VisualTargetItem = (eventArgs.Source as Visual)?.FindAncestorOfType<TreeViewItem>(true);
+            if (VisualTargetItem is TreeViewItem treeViewItem)
+            {
+                var itemsParent = ItemsControl.ItemsControlFromItemContainer(treeViewItem);
+                TargetCollection = itemsParent?.ItemsSource as IEnumerable;
+                InsertIndex = itemsParent?.IndexFromContainer(treeViewItem) ?? 0;
+
+                var header = treeViewItem.HeaderPresenter;
+                if (header is not null)
+                {
+                    var position = eventArgs.GetPosition(header);
+                    if (position.Y >= header.Bounds.Height * 0.25
+                        && position.Y <= header.Bounds.Height * 0.75
+                        && treeViewItem.ItemsSource is IEnumerable children)
+                    {
+                        TargetCollection = children;
+                        InsertIndex = treeViewItem.ItemCount;
+                    }
+                    else if (position.Y > header.Bounds.Height / 2)
+                    {
+                        InsertIndex++;
+                    }
+                }
+            }
+            else
+            {
+                TargetCollection = treeView.ItemsSource as IEnumerable;
+                InsertIndex = treeView.ItemCount;
+            }
+        }
     }
 
     public object? Data { get; set; }
