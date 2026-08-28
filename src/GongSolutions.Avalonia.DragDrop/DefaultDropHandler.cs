@@ -65,8 +65,41 @@ public class DefaultDropHandler : IDropTarget
                     continue;
                 }
 
-                source.RemoveAt(sourceIndex);
+                if (item is Control)
+                {
+                    source.RemoveAt(sourceIndex);
+                    try
+                    {
+                        destination.Insert(insertIndex, item);
+                    }
+                    catch
+                    {
+                        source.Insert(Math.Min(sourceIndex, source.Count), item);
+                        throw;
+                    }
+
+                    insertedItems.Add(item);
+                    insertIndex++;
+                    continue;
+                }
+
+                destination.Insert(insertIndex, item);
+                try
+                {
+                    source.RemoveAt(sourceIndex);
+                }
+                catch
+                {
+                    destination.RemoveAt(insertIndex);
+                    throw;
+                }
+
+                insertedItems.Add(item);
+                insertIndex++;
             }
+
+            SelectDroppedItems(dropInfo, insertedItems);
+            return;
         }
 
         foreach (var item in data)
@@ -160,6 +193,21 @@ public class DefaultDropHandler : IDropTarget
             return;
         }
 
+        if (dropInfo.VisualTarget is DataGrid dataGrid)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                dataGrid.SelectedItems.Clear();
+                foreach (var item in items)
+                {
+                    dataGrid.SelectedItems.Add(item);
+                }
+
+                dataGrid.ScrollIntoView(items[^1], null);
+            });
+            return;
+        }
+
         var itemsParent = dropInfo.InsertPosition.HasFlag(RelativeInsertPosition.TargetItemCenter)
             ? dropInfo.VisualTargetItem as ItemsControl
             : dropInfo.VisualTargetItem is null
@@ -182,6 +230,12 @@ public class DefaultDropHandler : IDropTarget
                     listBox.ScrollIntoView(item);
                 }
 
+                return;
+            }
+
+            if (itemsParent is TabControl tabControl)
+            {
+                tabControl.SelectedItem = items[^1];
                 return;
             }
 

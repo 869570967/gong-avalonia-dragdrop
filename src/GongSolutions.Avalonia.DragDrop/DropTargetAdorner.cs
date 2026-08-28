@@ -115,10 +115,20 @@ internal sealed class DropTargetAdorner : Panel
                 return;
             }
 
-            var y = DropInfo.InsertPosition.HasFlag(RelativeInsertPosition.AfterTargetItem)
-                ? bounds.Bottom
-                : bounds.Top;
-            context.DrawLine(new Pen(accent, 2), new Point(bounds.Left, y), new Point(bounds.Right, y));
+            if (DropInfo.IsHorizontal)
+            {
+                var x = DropInfo.InsertPosition.HasFlag(RelativeInsertPosition.AfterTargetItem)
+                    ? bounds.Right
+                    : bounds.Left;
+                context.DrawLine(new Pen(accent, 2), new Point(x, bounds.Top), new Point(x, bounds.Bottom));
+            }
+            else
+            {
+                var y = DropInfo.InsertPosition.HasFlag(RelativeInsertPosition.AfterTargetItem)
+                    ? bounds.Bottom
+                    : bounds.Top;
+                context.DrawLine(new Pen(accent, 2), new Point(bounds.Left, y), new Point(bounds.Right, y));
+            }
         }
     }
 }

@@ -9,9 +9,10 @@ public class DefaultDragHandler : IDragSource
 {
     public virtual void StartDrag(IDragInfo dragInfo)
     {
-        dragInfo.Data = dragInfo.SourceItems.Count == 1
-            ? dragInfo.SourceItems[0]
-            : dragInfo.SourceItems.ToList();
+        var singleItem = dragInfo.SourceItems.Count == 1 ? dragInfo.SourceItems[0] : null;
+        dragInfo.Data = singleItem is IEnumerable and not string
+            ? new[] { singleItem }
+            : singleItem ?? dragInfo.SourceItems.ToList();
         dragInfo.Effects = dragInfo.Data is null
             ? DragDropEffects.None
             : DragDropEffects.Copy | DragDropEffects.Move;

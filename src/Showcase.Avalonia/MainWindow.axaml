@@ -49,6 +49,14 @@
         <Style Selector="TreeView.dragTree TreeViewItem">
             <Setter Property="IsExpanded" Value="True" />
         </Style>
+        <Style Selector="DataGrid.dragGrid">
+            <Setter Property="MinHeight" Value="320" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="ItemsControl.dragItems > ContentPresenter">
+            <Setter Property="Padding" Value="10,8" />
+        </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto" Margin="28" RowSpacing="18">
@@ -155,6 +163,127 @@
                                 <TreeViewItem Header="Inbox" />
                             </TreeView>
                         </Grid>
+                    </Grid>
+                </Border>
+            </TabItem>
+
+            <TabItem Header="DataGrid">
+                <Grid Margin="0,12,0,0" ColumnDefinitions="*,*" ColumnSpacing="18">
+                    <Border Classes="listPanel">
+                        <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                            <StackPanel>
+                                <TextBlock Classes="heading" Text="Source rows" />
+                                <TextBlock Foreground="#6B7280" Text="Select multiple rows before dragging" />
+                            </StackPanel>
+                            <DataGrid Grid.Row="1"
+                                      Classes="dragGrid"
+                                      ItemsSource="{Binding DataGridSourceItems}"
+                                      AutoGenerateColumns="False"
+                                      CanUserReorderColumns="False"
+                                      IsReadOnly="True"
+                                      SelectionMode="Extended"
+                                      dd:DragDrop.DragDropContext="DataGrid"
+                                      dd:DragDrop.ScrollingMode="VerticalOnly"
+                                      dd:DragDrop.IsDragSource="True"
+                                      dd:DragDrop.IsDropTarget="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="ID" Binding="{Binding Index}" Width="80" />
+                                    <DataGridTextColumn Header="Caption" Binding="{Binding Caption}" Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Column="1" Classes="listPanel">
+                        <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                            <StackPanel>
+                                <TextBlock Classes="heading" Text="Target rows" />
+                                <TextBlock Foreground="#6B7280" Text="Drop above or below a row" />
+                            </StackPanel>
+                            <DataGrid Grid.Row="1"
+                                      Classes="dragGrid"
+                                      ItemsSource="{Binding DataGridTargetItems}"
+                                      AutoGenerateColumns="False"
+                                      CanUserReorderColumns="False"
+                                      IsReadOnly="True"
+                                      SelectionMode="Extended"
+                                      dd:DragDrop.DragDropContext="DataGrid"
+                                      dd:DragDrop.ScrollingMode="VerticalOnly"
+                                      dd:DragDrop.IsDragSource="True"
+                                      dd:DragDrop.IsDropTarget="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="ID" Binding="{Binding Index}" Width="80" />
+                                    <DataGridTextColumn Header="Caption" Binding="{Binding Caption}" Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Tabs">
+                <Grid Margin="0,12,0,0" RowDefinitions="*,*" RowSpacing="18">
+                    <Border Classes="listPanel">
+                        <TabControl ItemsSource="{Binding TabSourceItems}"
+                                    dd:DragDrop.DragDropContext="Tabs"
+                                    dd:DragDrop.IsDragSource="True"
+                                    dd:DragDrop.IsDropTarget="True">
+                            <TabControl.ItemTemplate>
+                                <DataTemplate x:DataType="local:ItemModel">
+                                    <TextBlock Text="{Binding Caption}" />
+                                </DataTemplate>
+                            </TabControl.ItemTemplate>
+                            <TabControl.ContentTemplate>
+                                <DataTemplate x:DataType="local:ItemModel">
+                                    <TextBlock Margin="16" FontSize="18" Text="{Binding Caption}" />
+                                </DataTemplate>
+                            </TabControl.ContentTemplate>
+                        </TabControl>
+                    </Border>
+                    <Border Grid.Row="1" Classes="listPanel">
+                        <TabControl ItemsSource="{Binding TabTargetItems}"
+                                    dd:DragDrop.DragDropContext="Tabs"
+                                    dd:DragDrop.IsDragSource="True"
+                                    dd:DragDrop.IsDropTarget="True">
+                            <TabControl.ItemTemplate>
+                                <DataTemplate x:DataType="local:ItemModel">
+                                    <TextBlock Text="{Binding Caption}" />
+                                </DataTemplate>
+                            </TabControl.ItemTemplate>
+                            <TabControl.ContentTemplate>
+                                <DataTemplate x:DataType="local:ItemModel">
+                                    <TextBlock Margin="16" FontSize="18" Text="{Binding Caption}" />
+                                </DataTemplate>
+                            </TabControl.ContentTemplate>
+                        </TabControl>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="ItemsControl">
+                <Border Margin="0,12,0,0" Classes="listPanel">
+                    <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                        <StackPanel>
+                            <TextBlock Classes="heading" Text="Plain ItemsControl" />
+                            <TextBlock Foreground="#6B7280" Text="Drag generated containers to reorder the collection" />
+                        </StackPanel>
+                        <ItemsControl Grid.Row="1"
+                                      Classes="dragItems"
+                                      ItemsSource="{Binding PlainItems}"
+                                      dd:DragDrop.DragDropContext="ItemsControl"
+                                      dd:DragDrop.IsDragSource="True"
+                                      dd:DragDrop.IsDropTarget="True">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="local:ItemModel">
+                                    <Border BorderBrush="#E5E7EB" BorderThickness="0,0,0,1">
+                                        <Grid ColumnDefinitions="60,*">
+                                            <TextBlock Foreground="#9CA3AF" Text="{Binding Index}" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Caption}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </Grid>
                 </Border>
             </TabItem>

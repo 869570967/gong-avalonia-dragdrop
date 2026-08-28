@@ -1,9 +1,13 @@
+using System;
 using System.Collections;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
+using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 
 namespace GongSolutions.Avalonia.DragDrop;
@@ -51,29 +55,27 @@ public sealed class DropInfo : IDropInfo
         TargetCollection = null;
         TargetItem = null;
         VisualTargetItem = null;
+        IsHorizontal = false;
 
-        if (VisualTarget is ListBox listBox)
+        if (VisualTarget is DataGrid dataGrid)
         {
-            TargetCollection = GetItems(listBox);
-            VisualTargetItem = (eventArgs.Source as Visual)?.FindAncestorOfType<ListBoxItem>(true);
-            if (VisualTargetItem is ListBoxItem item)
+            if (ItemsControlDragDropHelper.IsDataGridHeader(eventArgs.Source as Visual))
             {
-                var index = listBox.IndexFromContainer(item);
-                TargetItem = listBox.ItemFromContainer(item);
-                if (eventArgs.GetPosition(item).Y > item.Bounds.Height / 2)
-                {
-                    InsertIndex = index + 1;
-                    InsertPosition = RelativeInsertPosition.AfterTargetItem;
-                }
-                else
-                {
-                    InsertIndex = index;
-                    InsertPosition = RelativeInsertPosition.BeforeTargetItem;
-                }
+                return;
+            }
+
+            TargetCollection = dataGrid.ItemsSource as IEnumerable;
+            VisualTargetItem = ItemsControlDragDropHelper.FindDataGridRow(eventArgs.Source as Visual);
+            VisualTargetItem ??= ItemsControlDragDropHelper.FindClosestDataGridRow(dataGrid, DropPosition);
+            if (VisualTargetItem is DataGridRow { DataContext: { } rowItem } row)
+            {
+                TargetItem = rowItem;
+                InsertIndex = ItemsControlDragDropHelper.IndexOf(TargetCollection ?? Array.Empty<object>(), rowItem);
+                SetLinearInsertPosition(row, Orientation.Vertical);
             }
             else
             {
-                InsertIndex = listBox.ItemCount;
+                InsertIndex = TargetCollection?.Cast<object>().Count() ?? 0;
             }
         }
         else if (VisualTarget is TreeView treeView)
@@ -82,7 +84,7 @@ public sealed class DropInfo : IDropInfo
             if (VisualTargetItem is TreeViewItem treeViewItem)
             {
                 var itemsParent = ItemsControl.ItemsControlFromItemContainer(treeViewItem);
-                TargetCollection = itemsParent is null ? null : GetItems(itemsParent);
+                TargetCollection = itemsParent is null ? null : ItemsControlDragDropHelper.GetItems(itemsParent);
                 TargetItem = itemsParent?.ItemFromContainer(treeViewItem) ?? treeViewItem.DataContext;
                 InsertIndex = itemsParent?.IndexFromContainer(treeViewItem) ?? 0;
 
@@ -94,7 +96,7 @@ public sealed class DropInfo : IDropInfo
                         && position.Y <= header.Bounds.Height * 0.75
                         && AcceptChildItem)
                     {
-                        TargetCollection = GetItems(treeViewItem);
+                        TargetCollection = ItemsControlDragDropHelper.GetItems(treeViewItem);
                         InsertIndex = treeViewItem.ItemCount;
                         InsertPosition = RelativeInsertPosition.TargetItemCenter;
                     }
@@ -111,15 +113,62 @@ public sealed class DropInfo : IDropInfo
             }
             else
             {
-                TargetCollection = GetItems(treeView);
+                TargetCollection = ItemsControlDragDropHelper.GetItems(treeView);
                 InsertIndex = treeView.ItemCount;
+            }
+        }
+        else if (VisualTarget is ItemsControl itemsControl)
+        {
+            var orientation = ItemsControlDragDropHelper.GetOrientation(itemsControl);
+            IsHorizontal = orientation == Orientation.Horizontal;
+            VisualTargetItem = ItemsControlDragDropHelper.FindContainer(itemsControl, eventArgs.Source as Visual);
+
+            if (itemsControl is TabControl
+                && (VisualTargetItem is not TabItem tabItem
+                    || !ItemsControlDragDropHelper.IsTabHeader(eventArgs.Source as Visual, tabItem)))
+            {
+                return;
+            }
+
+            VisualTargetItem ??= ItemsControlDragDropHelper.FindClosestContainer(itemsControl, DropPosition, orientation);
+
+            if (VisualTargetItem is { } item
+                && ItemsControl.ItemsControlFromItemContainer(item) is { } itemsParent)
+            {
+                orientation = ItemsControlDragDropHelper.GetOrientation(itemsParent);
+                IsHorizontal = orientation == Orientation.Horizontal;
+                TargetCollection = ItemsControlDragDropHelper.GetItems(itemsParent);
+                TargetItem = itemsParent.ItemFromContainer(item) ?? item.DataContext;
+                InsertIndex = itemsParent.IndexFromContainer(item);
+                SetLinearInsertPosition(item, orientation);
+            }
+            else
+            {
+                TargetCollection = ItemsControlDragDropHelper.GetItems(itemsControl);
+                InsertIndex = itemsControl.ItemCount;
             }
         }
     }
 
-    private static IEnumerable GetItems(ItemsControl itemsControl)
+    private void SetLinearInsertPosition(Control item, Orientation orientation)
     {
-        return itemsControl.ItemsSource as IEnumerable ?? itemsControl.Items;
+        var position = eventArgs.GetPosition(item);
+        var after = orientation == Orientation.Horizontal
+            ? position.X > item.Bounds.Width / 2
+            : position.Y > item.Bounds.Height / 2;
+        if (orientation == Orientation.Horizontal && item.FlowDirection == FlowDirection.RightToLeft)
+        {
+            after = !after;
+        }
+        if (after)
+        {
+            InsertIndex++;
+            InsertPosition = RelativeInsertPosition.AfterTargetItem;
+        }
+        else
+        {
+            InsertPosition = RelativeInsertPosition.BeforeTargetItem;
+        }
     }
 
     public object? Data { get; set; }
@@ -127,6 +176,7 @@ public sealed class DropInfo : IDropInfo
     public IDragInfo? DragInfo { get; }
     public Point DropPosition { get; }
     public DragDropEffects Effects { get; set; }
+    public bool IsHorizontal { get; private set; }
     public int InsertIndex { get; private set; }
     public RelativeInsertPosition InsertPosition { get; private set; }
     public IEnumerable? TargetCollection { get; private set; }

@@ -14,6 +14,7 @@ public interface IDropInfo
     IDragInfo? DragInfo { get; }
     Point DropPosition { get; }
     DragDropEffects Effects { get; set; }
+    bool IsHorizontal { get; }
     int InsertIndex { get; }
     RelativeInsertPosition InsertPosition { get; }
     IEnumerable? TargetCollection { get; }
