@@ -22,12 +22,12 @@ public sealed class MainViewModel
             "Projects",
             new TreeNodeModel(
                 "Avalonia",
-                new TreeNodeModel("Controls"),
-                new TreeNodeModel("Themes")),
+                new TreeNodeModel("Controls") { CanAcceptChildren = false },
+                new TreeNodeModel("Themes") { CanAcceptChildren = false }),
             new TreeNodeModel(
                 "Libraries",
-                new TreeNodeModel("Drag and drop"),
-                new TreeNodeModel("Utilities"))));
+                new TreeNodeModel("Drag and drop") { CanAcceptChildren = false },
+                new TreeNodeModel("Utilities") { CanAcceptChildren = false })));
         TreeItems.Add(new TreeNodeModel(
             "Documents",
             new TreeNodeModel("Notes"),

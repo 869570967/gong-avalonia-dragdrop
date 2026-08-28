@@ -10,6 +10,9 @@
         MinHeight="600"
         Background="#F3F4F6"
         Title="GongSolutions.Avalonia.DragDrop">
+    <Window.Resources>
+        <local:TreeDropHandler x:Key="TreeDropHandler" />
+    </Window.Resources>
     <Window.Styles>
         <Style Selector="TextBlock.eyebrow">
             <Setter Property="FontSize" Value="12" />
@@ -111,23 +114,47 @@
 
             <TabItem Header="Tree">
                 <Border Margin="0,12,0,0" Classes="listPanel">
-                    <Grid RowDefinitions="Auto,*" RowSpacing="12">
-                        <StackPanel>
-                            <TextBlock Classes="heading" Text="Tree collection" />
-                            <TextBlock Foreground="#6B7280" Text="Drop near an edge to reorder, or in the center to add a child" />
-                        </StackPanel>
-                        <TreeView Grid.Row="1"
-                                  Classes="dragTree"
-                                  ItemsSource="{Binding TreeItems}"
-                                  dd:DragDrop.DragDropContext="Main"
-                                  dd:DragDrop.IsDragSource="True"
-                                  dd:DragDrop.IsDropTarget="True">
-                            <TreeView.ItemTemplate>
-                                <TreeDataTemplate x:DataType="local:TreeNodeModel" ItemsSource="{Binding Children}">
-                                    <TextBlock Padding="8,5" Text="{Binding Caption}" />
-                                </TreeDataTemplate>
-                            </TreeView.ItemTemplate>
-                        </TreeView>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="18">
+                        <Grid RowDefinitions="Auto,*" RowSpacing="12">
+                            <StackPanel>
+                                <TextBlock Classes="heading" Text="Bound tree" />
+                                <TextBlock Foreground="#6B7280" Text="Leaf nodes reject child drops" />
+                            </StackPanel>
+                            <TreeView Grid.Row="1"
+                                      Classes="dragTree"
+                                      ItemsSource="{Binding TreeItems}"
+                                      dd:DragDrop.DragDropContext="Main"
+                                      dd:DragDrop.DropHandler="{StaticResource TreeDropHandler}"
+                                      dd:DragDrop.IsDragSource="True"
+                                      dd:DragDrop.IsDropTarget="True">
+                                <TreeView.ItemTemplate>
+                                    <TreeDataTemplate x:DataType="local:TreeNodeModel" ItemsSource="{Binding Children}">
+                                        <TextBlock Padding="8,5" Text="{Binding Caption}" />
+                                    </TreeDataTemplate>
+                                </TreeView.ItemTemplate>
+                            </TreeView>
+                        </Grid>
+
+                        <Grid Grid.Column="1" RowDefinitions="Auto,*" RowSpacing="12">
+                            <StackPanel>
+                                <TextBlock Classes="heading" Text="Unbound tree" />
+                                <TextBlock Foreground="#6B7280" Text="Uses direct TreeViewItem children" />
+                            </StackPanel>
+                            <TreeView Grid.Row="1"
+                                      Classes="dragTree"
+                                      dd:DragDrop.DragDropContext="UnboundTree"
+                                      dd:DragDrop.IsDragSource="True"
+                                      dd:DragDrop.IsDropTarget="True">
+                                <TreeViewItem Header="Workspace" IsExpanded="True">
+                                    <TreeViewItem Header="Source" />
+                                    <TreeViewItem Header="Tests" />
+                                </TreeViewItem>
+                                <TreeViewItem Header="Archive" IsExpanded="True">
+                                    <TreeViewItem Header="Old versions" />
+                                </TreeViewItem>
+                                <TreeViewItem Header="Inbox" />
+                            </TreeView>
+                        </Grid>
                     </Grid>
                 </Border>
             </TabItem>

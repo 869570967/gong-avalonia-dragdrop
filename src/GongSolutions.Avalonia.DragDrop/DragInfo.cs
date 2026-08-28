@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.VisualTree;
 
 namespace GongSolutions.Avalonia.DragDrop;
@@ -22,7 +23,7 @@ public sealed class DragInfo : IDragInfo
 
         if (source is ListBox listBox)
         {
-            SourceCollection = listBox.ItemsSource as IEnumerable ?? Array.Empty<object>();
+            SourceCollection = GetItems(listBox);
             var selectedItems = listBox.SelectedItems?.Cast<object>().ToList() ?? new List<object>();
             var clickedItem = VisualSourceItem?.DataContext;
             SourceItems = selectedItems.Count > 0 && clickedItem is not null && selectedItems.Contains(clickedItem)
@@ -32,10 +33,11 @@ public sealed class DragInfo : IDragInfo
             else if (VisualSourceItem is TreeViewItem treeViewItem)
             {
                 var itemsParent = ItemsControl.ItemsControlFromItemContainer(treeViewItem);
-                SourceCollection = itemsParent?.ItemsSource as IEnumerable ?? Array.Empty<object>();
-                SourceItems = treeViewItem.DataContext is null
+                SourceCollection = itemsParent is null ? Array.Empty<object>() : GetItems(itemsParent);
+                var clickedItem = itemsParent?.ItemFromContainer(treeViewItem) ?? treeViewItem.DataContext;
+                SourceItems = clickedItem is null
                 ? Array.Empty<object>()
-                : new[] { treeViewItem.DataContext };
+                    : new[] { clickedItem };
             }
         else
         {
@@ -44,7 +46,13 @@ public sealed class DragInfo : IDragInfo
         }
     }
 
+    private static IEnumerable GetItems(ItemsControl itemsControl)
+    {
+        return itemsControl.ItemsSource as IEnumerable ?? itemsControl.Items;
+    }
+
     public object? Data { get; set; }
+    public IDataTransfer? DataTransfer { get; set; }
     public DragDropEffects Effects { get; set; }
     public Point DragStartPosition { get; }
     public IEnumerable SourceCollection { get; }

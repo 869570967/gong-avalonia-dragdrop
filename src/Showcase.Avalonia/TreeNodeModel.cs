@@ -13,10 +13,16 @@ public sealed class TreeNodeModel : ICloneable
     }
 
     public string Caption { get; }
+    public bool CanAcceptChildren { get; init; } = true;
     public ObservableCollection<TreeNodeModel> Children { get; }
 
     public object Clone()
     {
-        return new TreeNodeModel(Caption, Children.Select(child => (TreeNodeModel)child.Clone()).ToArray());
+        return new TreeNodeModel(Caption, Children.Select(child => (TreeNodeModel)child.Clone()).ToArray())
+        {
+            CanAcceptChildren = CanAcceptChildren
+        };
     }
+
+    public override string ToString() => Caption;
 }
