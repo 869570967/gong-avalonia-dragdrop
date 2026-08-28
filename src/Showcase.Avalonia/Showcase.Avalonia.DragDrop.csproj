@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <AssemblyName>Showcase.Avalonia.DragDrop</AssemblyName>
+        <RootNamespace>Showcase.Avalonia.DragDrop</RootNamespace>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia.Desktop" />
+        <PackageReference Include="Avalonia.Fonts.Inter" />
+        <PackageReference Include="Avalonia.Themes.Fluent" />
+        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" />
+        <ProjectReference Include="..\GongSolutions.Avalonia.DragDrop\GongSolutions.Avalonia.DragDrop.csproj" />
+    </ItemGroup>
+</Project>

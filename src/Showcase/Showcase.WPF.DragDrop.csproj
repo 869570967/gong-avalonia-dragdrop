@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+    <!-- Project properties -->
+    <PropertyGroup>
+        <TargetFrameworks>net9.0-windows;net8.0-windows;net6.0-windows;net462</TargetFrameworks>
+        <AssemblyName>Showcase.WPF.DragDrop</AssemblyName>
+        <RootNamespace>Showcase.WPF.DragDrop</RootNamespace>
+        <DisableFody Condition=" '$(Configuration)' == 'Debug' ">true</DisableFody>
+        <Description>Showcase application for GongSolutions.WPF.DragDrop</Description>
+        <!-- Workaround for https://github.com/dotnet/sourcelink/issues/91 -->
+        <DeterministicSourcePaths Condition="'$(EnableSourceLink)' == ''">false</DeterministicSourcePaths>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <NoWarn>SA1652;WPF0041</NoWarn>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\GongSolutions.WPF.DragDrop\GongSolutions.WPF.DragDrop.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MahApps.Metro.IconPacks.FeatherIcons" />
+        <PackageReference Include="MahApps.Metro.IconPacks.Material" />
+        <PackageReference Include="MahApps.Metro.IconPacks.Octicons" />
+        <PackageReference Include="Faker.Net" />
+    </ItemGroup>
+
+    <ItemGroup Condition="$(DefineConstants.Contains(NETCOREAPP)) == false">
+        <PackageReference Include="Costura.Fody">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>compile; runtime; build; native; contentfiles; analyzers</IncludeAssets>
+        </PackageReference>
+      </ItemGroup>
+
+    <ItemGroup>
+        <None Include="app.manifest" />
+    </ItemGroup>
+</Project>
