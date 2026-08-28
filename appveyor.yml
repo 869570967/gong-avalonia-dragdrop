@@ -8,16 +8,6 @@ branches:
 environment:
   # bad, but without this, gitversion doesn't work anymore
   IGNORE_NORMALISATION_GIT_HEAD_MOVE: 1
-  azure-key-vault-url:
-    secure: 1mKS/HfCVq+iYNRVSrrN8NEowOkKt3knrpMzw+SOy3g=
-  azure-key-vault-client-id:
-    secure: JfSqzmsJdXB6uIxttCRoQw1NygwxqXHDj9uIqQnWOb9VCnQYlRPlAnxgW0yTSX4b
-  azure-key-vault-tenant-id:
-    secure: FxjkcqtpulfpDpfSAu4onaLVP/H1S1ORRCQCqsZkDC6YhCSmFoMxYNsWv5uGe3ah
-  azure-key-vault-client-secret:
-    secure: CUpRJxMLeUZwNPMcqI0wECaWfy5AMnWn1UZhBd9WnQ3Z16lJP1Vzrkf24mccbhUD
-  azure-key-vault-certificate:
-    secure: BSPdW2TgnQtoQXXbeDECug==
 
 image: Visual Studio 2022
 test: false
@@ -31,11 +21,10 @@ pull_requests:
 
 build_script:
   - ps: dotnet --info
-  - ps: gitversion /version
-  - ps: .\build.ps1 --target=ci --verbosity=diagnostic
+  - ps: .\build.ps1 --target=package --verbosity=diagnostic
 
 artifacts:
-  - path: \Publish\*.*
+  - path: Publish\*.*
 
 nuget:
   disable_publish_on_pr: true

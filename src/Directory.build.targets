@@ -2,10 +2,10 @@
 
     <!-- AssemblyInfo -->
     <PropertyGroup>
-        <Company>GongSolutions.WPF.DragDrop</Company>
-        <Product>GongSolutions.WPF.DragDrop</Product>
-        <Copyright>Copyright © 2013 - $([System.DateTime]::Today.ToString(yyyy)) GongSolutions.WPF.DragDrop</Copyright>
-        <Description>An easy to use drag'n'drop framework for WPF applications.</Description>
+        <Company>GongSolutions.Avalonia.DragDrop</Company>
+        <Product>GongSolutions.Avalonia.DragDrop</Product>
+        <Copyright>Copyright © 2013 - $([System.DateTime]::Today.ToString(yyyy)) GongSolutions.Avalonia.DragDrop</Copyright>
+        <Description>An easy-to-use drag-and-drop framework for Avalonia applications.</Description>
 
         <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
         <Version>4.0.0.0</Version>

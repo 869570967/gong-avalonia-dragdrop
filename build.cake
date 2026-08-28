@@ -19,7 +19,7 @@ var target = Argument("target", "Default");
 // PREPARATION
 ///////////////////////////////////////////////////////////////////////////////
 
-var repoName = "gong-wpf-dragdrop";
+var repoName = "gong-avalonia-dragdrop";
 var baseDir = MakeAbsolute(Directory(".")).ToString();
 var srcDir = baseDir + "/src";
 var solution = srcDir + "/GongSolutions.Avalonia.DragDrop.sln";
@@ -164,7 +164,6 @@ Task("Build")
 });
 
 Task("Pack")
-    .ContinueOnError()
     .Does<BuildData>(data =>
 {
     EnsureDirectoryExists(Directory(publishDir));
@@ -206,7 +205,6 @@ Task("Pack")
 
 Task("Sign")
     .WithCriteria<BuildData>((context, data) => !data.IsPullRequest)
-    .ContinueOnError()
     .Does<BuildData>(data =>
 {
     var files = GetFiles("./src/GongSolutions.Avalonia.DragDrop/bin/**/*/GongSolutions.Avalonia.DragDrop.dll");
@@ -219,37 +217,31 @@ Task("Sign")
 Task("SignNuGet")
     .WithCriteria<BuildData>((context, data) => !data.IsPullRequest)
     .WithCriteria<BuildData>((context, data) => DirectoryExists(Directory(publishDir)))
-    .ContinueOnError()
     .Does(() =>
 {
     var vurl = EnvironmentVariable("azure-key-vault-url");
     if(string.IsNullOrWhiteSpace(vurl)) {
-        Error("Could not resolve signing url.");
-        return;
+        throw new Exception("Could not resolve signing url.");
     }
 
     var vcid = EnvironmentVariable("azure-key-vault-client-id");
     if(string.IsNullOrWhiteSpace(vcid)) {
-        Error("Could not resolve signing client id.");
-        return;
+        throw new Exception("Could not resolve signing client id.");
     }
 
     var vctid = EnvironmentVariable("azure-key-vault-tenant-id");
     if(string.IsNullOrWhiteSpace(vctid)) {
-        Error("Could not resolve signing client tenant id.");
-        return;
+        throw new Exception("Could not resolve signing client tenant id.");
     }
 
     var vcs = EnvironmentVariable("azure-key-vault-client-secret");
     if(string.IsNullOrWhiteSpace(vcs)) {
-        Error("Could not resolve signing client secret.");
-        return;
+        throw new Exception("Could not resolve signing client secret.");
     }
 
     var vc = EnvironmentVariable("azure-key-vault-certificate");
     if(string.IsNullOrWhiteSpace(vc)) {
-        Error("Could not resolve signing certificate.");
-        return;
+        throw new Exception("Could not resolve signing certificate.");
     }
 
     var nugetFiles = GetFiles(publishDir + "/*.nupkg");
@@ -305,7 +297,7 @@ Task("CreateRelease")
         throw new Exception("The GITHUB_TOKEN environment variable is not defined.");
     }
 
-    GitReleaseManagerCreate(token, "punker76", repoName, new GitReleaseManagerCreateSettings {
+    GitReleaseManagerCreate(token, "869570967", repoName, new GitReleaseManagerCreateSettings {
         Milestone         = data.GitVersion.MajorMinorPatch,
         Name              = data.GitVersion.AssemblySemFileVer,
         Prerelease        = data.IsPrerelease,
@@ -322,32 +314,27 @@ void SignFiles(IEnumerable<FilePath> files, string description)
 {
     var vurl = EnvironmentVariable("azure-key-vault-url");
     if(string.IsNullOrWhiteSpace(vurl)) {
-        Error("Could not resolve signing url.");
-        return;
+        throw new Exception("Could not resolve signing url.");
     }
 
     var vcid = EnvironmentVariable("azure-key-vault-client-id");
     if(string.IsNullOrWhiteSpace(vcid)) {
-        Error("Could not resolve signing client id.");
-        return;
+        throw new Exception("Could not resolve signing client id.");
     }
 
     var vctid = EnvironmentVariable("azure-key-vault-tenant-id");
     if(string.IsNullOrWhiteSpace(vctid)) {
-        Error("Could not resolve signing client tenant id.");
-        return;
+        throw new Exception("Could not resolve signing client tenant id.");
     }
 
     var vcs = EnvironmentVariable("azure-key-vault-client-secret");
     if(string.IsNullOrWhiteSpace(vcs)) {
-        Error("Could not resolve signing client secret.");
-        return;
+        throw new Exception("Could not resolve signing client secret.");
     }
 
     var vc = EnvironmentVariable("azure-key-vault-certificate");
     if(string.IsNullOrWhiteSpace(vc)) {
-        Error("Could not resolve signing certificate.");
-        return;
+        throw new Exception("Could not resolve signing certificate.");
     }
 
     var filesToSign = string.Join(" ", files.Select(f => MakeAbsolute(f).FullPath));
@@ -359,7 +346,7 @@ void SignFiles(IEnumerable<FilePath> files, string description)
                         .Append(filesToSign)
                         .AppendSwitchQuoted("--file-digest", "sha256")
                         .AppendSwitchQuoted("--description", description)
-                        .AppendSwitchQuoted("--description-url", "https://github.com/punker76/gong-wpf-dragdrop")
+                        .AppendSwitchQuoted("--description-url", "https://github.com/869570967/gong-avalonia-dragdrop")
                         .Append("--no-page-hashing")
                         .AppendSwitchQuoted("--timestamp-rfc3161", "http://timestamp.digicert.com")
                         .AppendSwitchQuoted("--timestamp-digest", "sha256")
@@ -427,6 +414,12 @@ Task("Default")
     .IsDependentOn("Restore")
     .IsDependentOn("StyleXaml")
     .IsDependentOn("Build")
+    ;
+
+Task("package")
+    .IsDependentOn("Default")
+    .IsDependentOn("Pack")
+    .IsDependentOn("Zip")
     ;
 
 Task("ci")

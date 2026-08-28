@@ -1,7 +1,7 @@
 create:
   include-footer: true
   footer-heading: Where to get it
-  footer-content: You can download this release from [gong-wpf-dragdrop](https://github.com/punker76/gong-wpf-dragdrop/releases/{milestone})
+  footer-content: You can download this release from [gong-avalonia-dragdrop](https://github.com/869570967/gong-avalonia-dragdrop/releases/{milestone})
   footer-includes-milestone: true
   milestone-replace-text: '{milestone}'
 export:

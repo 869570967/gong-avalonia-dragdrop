@@ -2,11 +2,10 @@
     <PropertyGroup>
         <Authors>Jan Karger, Steven Kirk, mitchell.jon and Contributors</Authors>
         <PackageId>gong-avalonia-dragdrop</PackageId>
-        <PackageLicenseFile>LICENSE</PackageLicenseFile>
-        <PackageProjectUrl>https://github.com/punker76/gong-wpf-dragdrop</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/869570967/gong-avalonia-dragdrop</PackageProjectUrl>
         <PackageTags>Avalonia;UI;XAML;DragDrop;Toolkit;Library;.NET</PackageTags>
-        <PackageReleaseNotes>https://github.com/punker76/gong-wpf-dragdrop/releases</PackageReleaseNotes>
-        <RepositoryUrl>https://github.com/punker76/gong-wpf-dragdrop.git</RepositoryUrl>
+        <PackageReleaseNotes>https://github.com/869570967/gong-avalonia-dragdrop/releases</PackageReleaseNotes>
+        <RepositoryUrl>https://github.com/869570967/gong-avalonia-dragdrop.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <GenerateLibraryLayout>true</GenerateLibraryLayout>
         <SignAssembly>true</SignAssembly>
@@ -14,10 +13,5 @@
         <DelaySign>false</DelaySign>
         <PublicSign Condition="'$(OS)' != 'Windows_NT'">true</PublicSign>
     </PropertyGroup>
-
-    <ItemGroup>
-        <None Include="..\..\LICENSE" Pack="true" PackagePath="" />
-    </ItemGroup>
-
     <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)../'))" />
 </Project>
