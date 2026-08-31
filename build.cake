@@ -5,7 +5,6 @@
 #tool dotnet:?package=NuGetKeyVaultSignTool&version=3.2.3
 #tool dotnet:?package=AzureSignTool&version=6.0.0
 #tool dotnet:?package=GitReleaseManager.Tool&version=0.17.0
-#tool dotnet:?package=XamlStyler.Console&version=3.2206.4
 
 #tool nuget:?package=GitVersion.CommandLine&version=5.12.0
 
@@ -24,9 +23,6 @@ var baseDir = MakeAbsolute(Directory(".")).ToString();
 var srcDir = baseDir + "/src";
 var solution = srcDir + "/GongSolutions.Avalonia.DragDrop.sln";
 var publishDir = baseDir + "/Publish";
-
-var styler = Context.Tools.Resolve("xstyler.exe");
-var stylerFile = baseDir + "/Settings.XAMLStyler";
 
 public class BuildData
 {
@@ -288,18 +284,6 @@ Task("Zip")
     Zip($"./src/Showcase.Avalonia/bin/{data.Configuration}", $"{publishDir}/Showcase.Avalonia.DragDrop.{data.Configuration}-v" + data.GitVersion.NuGetVersion + ".zip");
 });
 
-Task("StyleXaml")
-    .Description("Ensures XAML Formatting is Clean")
-    .Does(() =>
-{
-    Func<IFileSystemInfo, bool> exclude_Dir =
-        fileSystemInfo => !fileSystemInfo.Path.Segments.Contains("obj");
-
-    var files = GetFiles(srcDir + "/**/*.axaml", new GlobberSettings { Predicate = exclude_Dir });
-    Information("\nChecking " + files.Count() + " file(s) for XAML Structure");
-    ExecuteProcess(styler, "-f \"" + string.Join(",", files.Select(f => f.ToString())) + "\" -c \"" + stylerFile + "\"");
-});
-
 Task("CreateRelease")
     .WithCriteria<BuildData>((context, data) => !data.IsPullRequest)
     .Does<BuildData>(data =>
@@ -425,7 +409,6 @@ void ExecuteProcess(FilePath fileName, ProcessArgumentBuilder arguments, string 
 Task("Default")
     .IsDependentOn("Clean")
     .IsDependentOn("Restore")
-    .IsDependentOn("StyleXaml")
     .IsDependentOn("Build")
     .IsDependentOn("Test")
     ;
