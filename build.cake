@@ -310,7 +310,7 @@ Task("CreateRelease")
         throw new Exception("The GITHUB_TOKEN environment variable is not defined.");
     }
 
-    GitReleaseManagerCreate(token, "869570967", repoName, new GitReleaseManagerCreateSettings {
+    GitReleaseManagerCreate(token, "LIJIAOLONG96", repoName, new GitReleaseManagerCreateSettings {
         Milestone         = data.GitVersion.MajorMinorPatch,
         Name              = data.GitVersion.AssemblySemFileVer,
         Prerelease        = data.IsPrerelease,
@@ -359,7 +359,7 @@ void SignFiles(IEnumerable<FilePath> files, string description)
                         .Append(filesToSign)
                         .AppendSwitchQuoted("--file-digest", "sha256")
                         .AppendSwitchQuoted("--description", description)
-                        .AppendSwitchQuoted("--description-url", "https://github.com/869570967/gong-avalonia-dragdrop")
+                        .AppendSwitchQuoted("--description-url", "https://github.com/LIJIAOLONG96/gong-avalonia-dragdrop")
                         .Append("--no-page-hashing")
                         .AppendSwitchQuoted("--timestamp-rfc3161", "http://timestamp.digicert.com")
                         .AppendSwitchQuoted("--timestamp-digest", "sha256")

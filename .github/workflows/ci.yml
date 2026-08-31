@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   build:
@@ -41,20 +42,14 @@ jobs:
           script-path: build.cake
           target: package
 
-      - name: Build, sign, and package Avalonia release
+      - name: Build and package Avalonia release
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         uses: cake-build/cake-action@v2
         with:
           cake-version: tool-manifest
           verbosity: Normal
           script-path: build.cake
-          target: ci
-        env:
-          azure-key-vault-url: ${{ secrets.AZURE_KEY_VAULT_URL }}
-          azure-key-vault-client-id: ${{ secrets.AZURE_KEY_VAULT_CLIENT_ID }}
-          azure-key-vault-tenant-id: ${{ secrets.AZURE_KEY_VAULT_TENANT_ID }}
-          azure-key-vault-client-secret: ${{ secrets.AZURE_KEY_VAULT_CLIENT_SECRET }}
-          azure-key-vault-certificate: ${{ secrets.AZURE_KEY_VAULT_CERTIFICATE }}
+          target: package
 
       - name: Upload Avalonia packages
         uses: actions/upload-artifact@v4
@@ -63,16 +58,17 @@ jobs:
           path: Publish/*
           if-no-files-found: error
 
+      - name: Log in to NuGet with OIDC
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: lijiaolong
+
       - name: Publish Avalonia package to NuGet
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         shell: pwsh
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: |
-          if ([string]::IsNullOrWhiteSpace($env:NUGET_API_KEY)) {
-            throw 'The NUGET_API_KEY secret is not configured.'
-          }
-
           $packages = @(Get-ChildItem 'Publish/gong-avalonia-dragdrop.*.nupkg' -File)
           if ($packages.Count -ne 1) {
             throw "Expected exactly one Avalonia package, but found $($packages.Count)."
@@ -80,7 +76,7 @@ jobs:
 
           $packages | ForEach-Object {
             dotnet nuget push $_.FullName `
-              --api-key $env:NUGET_API_KEY `
+              --api-key '${{ steps.nuget-login.outputs.NUGET_API_KEY }}' `
               --source 'https://api.nuget.org/v3/index.json' `
               --skip-duplicate
           }

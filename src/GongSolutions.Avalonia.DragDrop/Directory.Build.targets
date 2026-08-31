@@ -2,10 +2,10 @@
     <PropertyGroup>
         <Authors>Jan Karger, Steven Kirk, mitchell.jon and Contributors</Authors>
         <PackageId>gong-avalonia-dragdrop</PackageId>
-        <PackageProjectUrl>https://github.com/869570967/gong-avalonia-dragdrop</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/LIJIAOLONG96/gong-avalonia-dragdrop</PackageProjectUrl>
         <PackageTags>Avalonia;UI;XAML;DragDrop;Toolkit;Library;.NET</PackageTags>
-        <PackageReleaseNotes>https://github.com/869570967/gong-avalonia-dragdrop/releases</PackageReleaseNotes>
-        <RepositoryUrl>https://github.com/869570967/gong-avalonia-dragdrop.git</RepositoryUrl>
+        <PackageReleaseNotes>https://github.com/LIJIAOLONG96/gong-avalonia-dragdrop/releases</PackageReleaseNotes>
+        <RepositoryUrl>https://github.com/LIJIAOLONG96/gong-avalonia-dragdrop.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <GenerateLibraryLayout>true</GenerateLibraryLayout>
         <SignAssembly>true</SignAssembly>
