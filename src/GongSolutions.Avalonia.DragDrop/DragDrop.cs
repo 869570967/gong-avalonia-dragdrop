@@ -1,26 +1,25 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 namespace GongSolutions.Avalonia.DragDrop;
 
 public static class DragDrop
 {
     private static readonly DataFormat<object> GongDataFormat = global::Avalonia.Input.DataFormat.CreateInProcessFormat<object>("GongSolutions.Avalonia.DragDrop");
-    private static IDragInfo? activeDragInfo;
-    private static PointerPressedEventArgs? triggerEvent;
-    private static bool dragInProgress;
-    private static DropTargetAdorner? dropTargetAdorner;
-    private static Control? adornedTarget;
-    private static TreeViewItem? pendingExpandTarget;
-    private static CancellationTokenSource? expandCancellation;
+    private static readonly ConditionalWeakTable<Control, DragSession> Sessions = new();
+    private static readonly ConditionalWeakTable<IDataTransfer, DragSession> TransferSessions = new();
 
     public static readonly AttachedProperty<bool> IsDragSourceProperty =
         AvaloniaProperty.RegisterAttached<Control, Control, bool>("IsDragSource");
@@ -49,9 +48,47 @@ public static class DragDrop
     public static readonly AttachedProperty<ScrollingMode> ScrollingModeProperty =
         AvaloniaProperty.RegisterAttached<Control, Control, ScrollingMode>("ScrollingMode", ScrollingMode.Both);
 
+    public static readonly AttachedProperty<double> MinimumHorizontalDragDistanceProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, double>("MinimumHorizontalDragDistance", 4);
+
+    public static readonly AttachedProperty<double> MinimumVerticalDragDistanceProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, double>("MinimumVerticalDragDistance", 4);
+
+    public static readonly AttachedProperty<KeyModifiers> DragDropCopyKeyModifiersProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, KeyModifiers>("DragDropCopyKeyModifiers", KeyModifiers.Control);
+
+    public static readonly AttachedProperty<bool> CanDragWithMouseRightButtonProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, bool>("CanDragWithMouseRightButton");
+
+    public static readonly AttachedProperty<bool> DragSourceIgnoreProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, bool>("DragSourceIgnore");
+
+    public static readonly AttachedProperty<IDataTemplate?> DragPreviewTemplateProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, IDataTemplate?>("DragPreviewTemplate");
+
+    public static readonly AttachedProperty<IDataTemplate?> EffectPreviewTemplateProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, IDataTemplate?>("EffectPreviewTemplate");
+
+    public static readonly AttachedProperty<string?> DropHintTextProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, string?>("DropHintText");
+
+    public static readonly AttachedProperty<IBrush> DropTargetAdornerBrushProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, IBrush>("DropTargetAdornerBrush", new SolidColorBrush(Color.FromRgb(37, 99, 235)));
+
+    public static readonly AttachedProperty<IDropTargetAdornerFactory?> DropTargetAdornerFactoryProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, IDropTargetAdornerFactory?>("DropTargetAdornerFactory");
+
+    public static readonly AttachedProperty<IDropTargetItemsSorter?> DropTargetItemsSorterProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, IDropTargetItemsSorter?>("DropTargetItemsSorter");
+
+    public static readonly AttachedProperty<IDropIndexResolver?> DropIndexResolverProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, IDropIndexResolver?>("DropIndexResolver");
+
+    public static readonly AttachedProperty<IDropGroupResolver?> DropGroupResolverProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, IDropGroupResolver?>("DropGroupResolver");
+
     public static IDragSource DefaultDragHandler { get; } = new DefaultDragHandler();
     public static IDropTarget DefaultDropHandler { get; } = new DefaultDropHandler();
-    internal static bool ShouldCopy { get; private set; }
 
     static DragDrop()
     {
@@ -77,6 +114,32 @@ public static class DragDrop
     public static void SetSelectDroppedItems(Control element, bool value) => element.SetValue(SelectDroppedItemsProperty, value);
     public static ScrollingMode GetScrollingMode(Control element) => element.GetValue(ScrollingModeProperty);
     public static void SetScrollingMode(Control element, ScrollingMode value) => element.SetValue(ScrollingModeProperty, value);
+    public static double GetMinimumHorizontalDragDistance(Control element) => element.GetValue(MinimumHorizontalDragDistanceProperty);
+    public static void SetMinimumHorizontalDragDistance(Control element, double value) => element.SetValue(MinimumHorizontalDragDistanceProperty, value);
+    public static double GetMinimumVerticalDragDistance(Control element) => element.GetValue(MinimumVerticalDragDistanceProperty);
+    public static void SetMinimumVerticalDragDistance(Control element, double value) => element.SetValue(MinimumVerticalDragDistanceProperty, value);
+    public static KeyModifiers GetDragDropCopyKeyModifiers(Control element) => element.GetValue(DragDropCopyKeyModifiersProperty);
+    public static void SetDragDropCopyKeyModifiers(Control element, KeyModifiers value) => element.SetValue(DragDropCopyKeyModifiersProperty, value);
+    public static bool GetCanDragWithMouseRightButton(Control element) => element.GetValue(CanDragWithMouseRightButtonProperty);
+    public static void SetCanDragWithMouseRightButton(Control element, bool value) => element.SetValue(CanDragWithMouseRightButtonProperty, value);
+    public static bool GetDragSourceIgnore(Control element) => element.GetValue(DragSourceIgnoreProperty);
+    public static void SetDragSourceIgnore(Control element, bool value) => element.SetValue(DragSourceIgnoreProperty, value);
+    public static IDataTemplate? GetDragPreviewTemplate(Control element) => element.GetValue(DragPreviewTemplateProperty);
+    public static void SetDragPreviewTemplate(Control element, IDataTemplate? value) => element.SetValue(DragPreviewTemplateProperty, value);
+    public static IDataTemplate? GetEffectPreviewTemplate(Control element) => element.GetValue(EffectPreviewTemplateProperty);
+    public static void SetEffectPreviewTemplate(Control element, IDataTemplate? value) => element.SetValue(EffectPreviewTemplateProperty, value);
+    public static string? GetDropHintText(Control element) => element.GetValue(DropHintTextProperty);
+    public static void SetDropHintText(Control element, string? value) => element.SetValue(DropHintTextProperty, value);
+    public static IBrush GetDropTargetAdornerBrush(Control element) => element.GetValue(DropTargetAdornerBrushProperty);
+    public static void SetDropTargetAdornerBrush(Control element, IBrush value) => element.SetValue(DropTargetAdornerBrushProperty, value);
+    public static IDropTargetAdornerFactory? GetDropTargetAdornerFactory(Control element) => element.GetValue(DropTargetAdornerFactoryProperty);
+    public static void SetDropTargetAdornerFactory(Control element, IDropTargetAdornerFactory? value) => element.SetValue(DropTargetAdornerFactoryProperty, value);
+    public static IDropTargetItemsSorter? GetDropTargetItemsSorter(Control element) => element.GetValue(DropTargetItemsSorterProperty);
+    public static void SetDropTargetItemsSorter(Control element, IDropTargetItemsSorter? value) => element.SetValue(DropTargetItemsSorterProperty, value);
+    public static IDropIndexResolver? GetDropIndexResolver(Control element) => element.GetValue(DropIndexResolverProperty);
+    public static void SetDropIndexResolver(Control element, IDropIndexResolver? value) => element.SetValue(DropIndexResolverProperty, value);
+    public static IDropGroupResolver? GetDropGroupResolver(Control element) => element.GetValue(DropGroupResolverProperty);
+    public static void SetDropGroupResolver(Control element, IDropGroupResolver? value) => element.SetValue(DropGroupResolverProperty, value);
 
     private static void OnIsDragSourceChanged(Control control, AvaloniaPropertyChangedEventArgs args)
     {
@@ -111,31 +174,48 @@ public static class DragDrop
 
     private static void OnPointerPressed(object? sender, PointerPressedEventArgs args)
     {
-        if (sender is not Control control || !args.GetCurrentPoint(control).Properties.IsLeftButtonPressed)
+        if (sender is not Control control)
         {
             return;
         }
 
-        activeDragInfo = GetDragInfoBuilder(control)?.CreateDragInfo(control, args)
+        var session = GetSession(control);
+
+        var properties = args.GetCurrentPoint(control).Properties;
+        if (!properties.IsLeftButtonPressed
+            && (!GetCanDragWithMouseRightButton(control) || !properties.IsRightButtonPressed)
+            || IsDragSourceIgnored(control, args.Source as Visual))
+        {
+            return;
+        }
+
+        session.ActiveDragInfo = GetDragInfoBuilder(control)?.CreateDragInfo(control, args)
                  ?? new DragInfo(control, args);
-        triggerEvent = args;
+        session.TriggerEvent = args;
     }
 
     private static async void OnPointerMoved(object? sender, PointerEventArgs args)
     {
-        if (sender is not Control control || activeDragInfo is null || triggerEvent is null || dragInProgress)
+        if (sender is not Control control)
+        {
+            return;
+        }
+
+        var session = GetSession(control);
+        if (session.ActiveDragInfo is null || session.TriggerEvent is null || session.DragInProgress)
         {
             return;
         }
 
         var position = args.GetPosition(control);
-        var delta = position - activeDragInfo.DragStartPosition;
-        if (Math.Abs(delta.X) < 4 && Math.Abs(delta.Y) < 4)
+        var delta = position - session.ActiveDragInfo.DragStartPosition;
+        if (Math.Abs(delta.X) < GetMinimumHorizontalDragDistance(control)
+            && Math.Abs(delta.Y) < GetMinimumVerticalDragDistance(control))
         {
             return;
         }
 
-        var dragInfo = activeDragInfo;
+        var dragInfo = session.ActiveDragInfo;
         var handler = GetDragHandler(control) ?? DefaultDragHandler;
         if (!handler.CanStartDrag(dragInfo))
         {
@@ -160,8 +240,9 @@ public static class DragDrop
 
         try
         {
-            dragInProgress = true;
-            var result = await global::Avalonia.Input.DragDrop.DoDragDropAsync(triggerEvent, transfer, dragInfo.Effects);
+            session.DragInProgress = true;
+            TransferSessions.Add(transfer, session);
+            var result = await global::Avalonia.Input.DragDrop.DoDragDropAsync(session.TriggerEvent, transfer, dragInfo.Effects);
             if (result == DragDropEffects.None)
             {
                 handler.DragCancelled();
@@ -174,20 +255,21 @@ public static class DragDrop
         }
         finally
         {
-            CancelAutoExpand();
-            ClearDropAdorner();
-            dragInProgress = false;
-            activeDragInfo = null;
-            triggerEvent = null;
+            TransferSessions.Remove(transfer);
+            CancelAutoExpand(session);
+            ClearDropAdorner(session);
+            session.DragInProgress = false;
+            session.ActiveDragInfo = null;
+            session.TriggerEvent = null;
         }
     }
 
     private static void OnPointerReleased(object? sender, PointerReleasedEventArgs args)
     {
-        if (!dragInProgress)
+        if (sender is Control control && GetSession(control) is { DragInProgress: false } session)
         {
-            activeDragInfo = null;
-            triggerEvent = null;
+            session.ActiveDragInfo = null;
+            session.TriggerEvent = null;
         }
     }
 
@@ -199,11 +281,11 @@ public static class DragDrop
         }
 
         var dropInfo = CreateDropInfo(control, args);
-        ShouldCopy = args.KeyModifiers.HasFlag(KeyModifiers.Control);
+        var session = GetSession(args.DataTransfer, control);
         (GetDropHandler(control) ?? DefaultDropHandler).DragOver(dropInfo);
         Scroll(dropInfo, args);
-        UpdateAutoExpand(dropInfo);
-        UpdateDropAdorner(dropInfo);
+        UpdateAutoExpand(session, dropInfo);
+        UpdateDropAdorner(session, dropInfo);
         args.DragEffects = dropInfo.Effects;
         args.Handled = true;
     }
@@ -216,12 +298,12 @@ public static class DragDrop
         }
 
         var dropInfo = CreateDropInfo(control, args);
-        ShouldCopy = args.KeyModifiers.HasFlag(KeyModifiers.Control);
+        var session = GetSession(args.DataTransfer, control);
         var dropHandler = GetDropHandler(control) ?? DefaultDropHandler;
         dropHandler.DragEnter(dropInfo);
         dropHandler.DragOver(dropInfo);
-        UpdateAutoExpand(dropInfo);
-        UpdateDropAdorner(dropInfo);
+        UpdateAutoExpand(session, dropInfo);
+        UpdateDropAdorner(session, dropInfo);
         args.DragEffects = dropInfo.Effects;
         args.Handled = true;
     }
@@ -233,9 +315,10 @@ public static class DragDrop
             return;
         }
 
+        var session = GetSession(args.DataTransfer, control);
         (GetDropHandler(control) ?? DefaultDropHandler).DragLeave(CreateDropInfo(control, args));
-        CancelAutoExpand();
-        ClearDropAdorner();
+        CancelAutoExpand(session);
+        ClearDropAdorner(session);
         args.Handled = true;
     }
 
@@ -247,21 +330,45 @@ public static class DragDrop
         }
 
         var dropInfo = CreateDropInfo(control, args);
-        ShouldCopy = args.KeyModifiers.HasFlag(KeyModifiers.Control);
+        var session = GetSession(args.DataTransfer, control);
         var dropHandler = GetDropHandler(control) ?? DefaultDropHandler;
         dropHandler.DragOver(dropInfo);
         dropHandler.Drop(dropInfo);
-        (activeDragInfo is null ? DefaultDragHandler : GetDragHandler(activeDragInfo.VisualSource) ?? DefaultDragHandler).Dropped(dropInfo);
+        (session.ActiveDragInfo is null ? DefaultDragHandler : GetDragHandler(session.ActiveDragInfo.VisualSource) ?? DefaultDragHandler).Dropped(dropInfo);
         args.DragEffects = dropInfo.Effects;
         args.Handled = true;
-        CancelAutoExpand();
-        ClearDropAdorner();
+        CancelAutoExpand(session);
+        ClearDropAdorner(session);
     }
 
     private static IDropInfo CreateDropInfo(Control control, DragEventArgs args)
     {
-        return GetDropInfoBuilder(control)?.CreateDropInfo(control, args, activeDragInfo)
-               ?? new DropInfo(control, args, activeDragInfo);
+        var dragInfo = GetSession(args.DataTransfer, control).ActiveDragInfo;
+        return GetDropInfoBuilder(control)?.CreateDropInfo(control, args, dragInfo)
+               ?? new DropInfo(control, args, dragInfo);
+    }
+
+    private static bool IsDragSourceIgnored(Control source, Visual? eventSource)
+    {
+        for (var visual = eventSource; visual is not null; visual = visual.GetVisualParent())
+        {
+            if (visual is Control control && GetDragSourceIgnore(control))
+            {
+                return true;
+            }
+
+            if (ReferenceEquals(visual, source))
+            {
+                break;
+            }
+
+            if (visual is TextBox or Button or Slider or ScrollBar or ComboBox or MenuItem)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void Scroll(IDropInfo dropInfo, DragEventArgs args)
@@ -297,38 +404,38 @@ public static class DragDrop
         }
     }
 
-    private static void UpdateAutoExpand(IDropInfo dropInfo)
+    private static void UpdateAutoExpand(DragSession session, IDropInfo dropInfo)
     {
         if (dropInfo.Effects == DragDropEffects.None
             || !dropInfo.InsertPosition.HasFlag(RelativeInsertPosition.TargetItemCenter)
             || dropInfo.VisualTargetItem is not TreeViewItem { IsExpanded: false, ItemCount: > 0 } target)
         {
-            CancelAutoExpand();
+            CancelAutoExpand(session);
             return;
         }
 
-        if (ReferenceEquals(target, pendingExpandTarget))
+        if (ReferenceEquals(target, session.PendingExpandTarget))
         {
             return;
         }
 
-        CancelAutoExpand();
-        pendingExpandTarget = target;
-        expandCancellation = new CancellationTokenSource();
-        _ = ExpandAfterDelayAsync(target, expandCancellation.Token);
+        CancelAutoExpand(session);
+        session.PendingExpandTarget = target;
+        session.ExpandCancellation = new CancellationTokenSource();
+        _ = ExpandAfterDelayAsync(session, target, session.ExpandCancellation.Token);
     }
 
-    private static async Task ExpandAfterDelayAsync(TreeViewItem target, CancellationToken cancellationToken)
+    private static async Task ExpandAfterDelayAsync(DragSession session, TreeViewItem target, CancellationToken cancellationToken)
     {
         try
         {
             await Task.Delay(600, cancellationToken);
             Dispatcher.UIThread.Post(() =>
             {
-                if (!cancellationToken.IsCancellationRequested && ReferenceEquals(target, pendingExpandTarget))
+                if (!cancellationToken.IsCancellationRequested && ReferenceEquals(target, session.PendingExpandTarget))
                 {
                     target.IsExpanded = true;
-                    CancelAutoExpand();
+                    CancelAutoExpand(session);
                 }
             });
         }
@@ -337,41 +444,63 @@ public static class DragDrop
         }
     }
 
-    private static void CancelAutoExpand()
+    private static void CancelAutoExpand(DragSession session)
     {
-        expandCancellation?.Cancel();
-        expandCancellation?.Dispose();
-        expandCancellation = null;
-        pendingExpandTarget = null;
+        session.ExpandCancellation?.Cancel();
+        session.ExpandCancellation?.Dispose();
+        session.ExpandCancellation = null;
+        session.PendingExpandTarget = null;
     }
 
-    private static void UpdateDropAdorner(IDropInfo dropInfo)
+    private static void UpdateDropAdorner(DragSession session, IDropInfo dropInfo)
     {
         if (dropInfo.Effects == DragDropEffects.None)
         {
-            ClearDropAdorner();
+            ClearDropAdorner(session);
             return;
         }
 
-        if (!ReferenceEquals(adornedTarget, dropInfo.VisualTarget))
+        if (!ReferenceEquals(session.AdornedTarget, dropInfo.VisualTarget))
         {
-            ClearDropAdorner();
-            adornedTarget = dropInfo.VisualTarget;
-            dropTargetAdorner = new DropTargetAdorner();
-            AdornerLayer.SetAdorner(adornedTarget, dropTargetAdorner);
+            ClearDropAdorner(session);
+            session.AdornedTarget = dropInfo.VisualTarget;
+            session.DropTargetAdorner = GetDropTargetAdornerFactory(dropInfo.VisualTarget)?.Create(dropInfo.VisualTarget)
+                                        ?? new DropTargetAdorner(dropInfo.VisualTarget);
+            AdornerLayer.SetAdorner(session.AdornedTarget, session.DropTargetAdorner.Visual);
         }
 
-        dropTargetAdorner?.Update(dropInfo);
+        session.DropTargetAdorner?.Update(dropInfo);
     }
 
-    private static void ClearDropAdorner()
+    private static void ClearDropAdorner(DragSession session)
     {
-        if (adornedTarget is not null)
+        if (session.AdornedTarget is not null)
         {
-            AdornerLayer.SetAdorner(adornedTarget, null);
+            AdornerLayer.SetAdorner(session.AdornedTarget, null);
         }
 
-        adornedTarget = null;
-        dropTargetAdorner = null;
+        session.AdornedTarget = null;
+        session.DropTargetAdorner = null;
+    }
+
+    private static DragSession GetSession(Control control)
+    {
+        return Sessions.GetValue(TopLevel.GetTopLevel(control) ?? control, static _ => new DragSession());
+    }
+
+    private static DragSession GetSession(IDataTransfer transfer, Control fallback)
+    {
+        return TransferSessions.TryGetValue(transfer, out var session) ? session : GetSession(fallback);
+    }
+
+    private sealed class DragSession
+    {
+        public IDragInfo? ActiveDragInfo { get; set; }
+        public PointerPressedEventArgs? TriggerEvent { get; set; }
+        public bool DragInProgress { get; set; }
+        public IDropTargetAdorner? DropTargetAdorner { get; set; }
+        public Control? AdornedTarget { get; set; }
+        public TreeViewItem? PendingExpandTarget { get; set; }
+        public CancellationTokenSource? ExpandCancellation { get; set; }
     }
 }

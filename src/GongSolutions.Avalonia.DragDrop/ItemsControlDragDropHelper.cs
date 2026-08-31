@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
@@ -13,6 +14,9 @@ namespace GongSolutions.Avalonia.DragDrop;
 
 internal static class ItemsControlDragDropHelper
 {
+    private static readonly ConditionalWeakTable<ItemsControl, ContainerCache> ContainerCaches = new();
+    private static readonly ConditionalWeakTable<DataGrid, DataGridRowCache> DataGridRowCaches = new();
+
     public static IEnumerable GetItems(ItemsControl itemsControl)
     {
         return itemsControl.ItemsSource as IEnumerable ?? itemsControl.Items;
@@ -55,19 +59,12 @@ internal static class ItemsControlDragDropHelper
 
     public static DataGridRow? FindClosestDataGridRow(DataGrid dataGrid, Point position)
     {
-        return dataGrid.GetVisualDescendants()
-            .OfType<DataGridRow>()
-            .OrderBy(row => DistanceFromCenter(row, dataGrid, position, Orientation.Vertical))
-            .FirstOrDefault();
+        return FindClosest(GetRealizedRows(dataGrid), dataGrid, position, Orientation.Vertical);
     }
 
     public static Control? FindClosestContainer(ItemsControl itemsControl, Point position, Orientation orientation)
     {
-        return itemsControl.GetVisualDescendants()
-            .OfType<Control>()
-            .Where(control => ReferenceEquals(ItemsControl.ItemsControlFromItemContainer(control), itemsControl))
-            .OrderBy(control => DistanceFromCenter(control, itemsControl, position, orientation))
-            .FirstOrDefault();
+        return FindClosest(GetRealizedContainers(itemsControl), itemsControl, position, orientation);
     }
 
     public static bool IsDataGridHeader(Visual? source)
@@ -134,5 +131,65 @@ internal static class ItemsControlDragDropHelper
             : origin.Y + control.Bounds.Height / 2;
         var coordinate = orientation == Orientation.Horizontal ? position.X : position.Y;
         return Math.Abs(center - coordinate);
+    }
+
+    private static IReadOnlyList<Control> GetRealizedContainers(ItemsControl itemsControl)
+    {
+        var cache = ContainerCaches.GetValue(itemsControl, static _ => new ContainerCache());
+        if (cache.ItemCount != itemsControl.ItemCount
+            || cache.Controls.Any(control => !ReferenceEquals(ItemsControl.ItemsControlFromItemContainer(control), itemsControl)))
+        {
+            cache.ItemCount = itemsControl.ItemCount;
+            cache.Controls = itemsControl.GetVisualDescendants()
+                .OfType<Control>()
+                .Where(control => ReferenceEquals(ItemsControl.ItemsControlFromItemContainer(control), itemsControl))
+                .ToArray();
+        }
+
+        return cache.Controls;
+    }
+
+    private static T? FindClosest<T>(IEnumerable<T> controls, Visual relativeTo, Point position, Orientation orientation)
+        where T : Control
+    {
+        T? closest = null;
+        var closestDistance = double.MaxValue;
+        foreach (var control in controls)
+        {
+            var distance = DistanceFromCenter(control, relativeTo, position, orientation);
+            if (distance < closestDistance)
+            {
+                closest = control;
+                closestDistance = distance;
+            }
+        }
+
+        return closest;
+    }
+
+    private static IReadOnlyList<DataGridRow> GetRealizedRows(DataGrid dataGrid)
+    {
+        var cache = DataGridRowCaches.GetValue(dataGrid, static _ => new DataGridRowCache());
+        var itemCount = dataGrid.ItemsSource?.Cast<object>().Count() ?? 0;
+        if (cache.ItemCount != itemCount
+            || cache.Rows.Any(row => !row.GetVisualAncestors().Contains(dataGrid)))
+        {
+            cache.ItemCount = itemCount;
+            cache.Rows = dataGrid.GetVisualDescendants().OfType<DataGridRow>().ToArray();
+        }
+
+        return cache.Rows;
+    }
+
+    private sealed class ContainerCache
+    {
+        public int ItemCount { get; set; } = -1;
+        public IReadOnlyList<Control> Controls { get; set; } = Array.Empty<Control>();
+    }
+
+    private sealed class DataGridRowCache
+    {
+        public int ItemCount { get; set; } = -1;
+        public IReadOnlyList<DataGridRow> Rows { get; set; } = Array.Empty<DataGridRow>();
     }
 }

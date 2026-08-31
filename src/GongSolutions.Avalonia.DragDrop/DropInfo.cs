@@ -21,9 +21,15 @@ public sealed class DropInfo : IDropInfo
         this.eventArgs = eventArgs;
         VisualTarget = target;
         DragInfo = dragInfo;
-        Data = dragInfo?.Data;
         DataTransfer = eventArgs.DataTransfer;
+        Data = dragInfo?.Data ?? GetExternalData(DataTransfer);
         DropPosition = eventArgs.GetPosition(target);
+        KeyModifiers = eventArgs.KeyModifiers;
+        var copyModifiers = dragInfo is null
+            ? DragDrop.GetDragDropCopyKeyModifiers(target)
+            : DragDrop.GetDragDropCopyKeyModifiers(dragInfo.VisualSource);
+        IsCopyRequested = copyModifiers != KeyModifiers.None
+                          && (KeyModifiers & copyModifiers) == copyModifiers;
         Effects = DragDropEffects.None;
         TargetScrollViewer = target.FindDescendantOfType<ScrollViewer>();
         acceptChildItem = true;
@@ -176,14 +182,25 @@ public sealed class DropInfo : IDropInfo
     public IDragInfo? DragInfo { get; }
     public Point DropPosition { get; }
     public DragDropEffects Effects { get; set; }
+    public KeyModifiers KeyModifiers { get; }
+    public bool IsCopyRequested { get; }
     public bool IsHorizontal { get; private set; }
     public int InsertIndex { get; private set; }
+    public int UnfilteredInsertIndex => DragDrop.GetDropIndexResolver(VisualTarget)?.ResolveSourceInsertIndex(this) ?? InsertIndex;
     public RelativeInsertPosition InsertPosition { get; private set; }
     public IEnumerable? TargetCollection { get; private set; }
     public object? TargetItem { get; private set; }
+    public object? TargetGroup => DragDrop.GetDropGroupResolver(VisualTarget)?.ResolveTargetGroup(this);
     public ScrollViewer? TargetScrollViewer { get; }
     public Control VisualTarget { get; }
     public Control? VisualTargetItem { get; private set; }
+    public bool IsExternal => DragInfo is null;
+
+    private static object? GetExternalData(IDataTransfer dataTransfer)
+    {
+        var files = dataTransfer.TryGetFiles()?.Cast<object>().ToList();
+        return files is { Count: > 0 } ? files : dataTransfer.TryGetText();
+    }
 
     public bool IsSameDragDropContextAsSource
     {

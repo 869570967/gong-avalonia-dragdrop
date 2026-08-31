@@ -163,6 +163,19 @@ Task("Build")
     DotNetBuild(solution, settings);
 });
 
+Task("Test")
+    .IsDependentOn("Build")
+    .Does<BuildData>(data =>
+{
+    DotNetTest(solution, new DotNetTestSettings
+    {
+      Configuration = data.Configuration,
+      Verbosity = data.DotNetVerbosity,
+      NoBuild = true,
+      NoRestore = true
+    });
+});
+
 Task("Pack")
     .Does<BuildData>(data =>
 {
@@ -414,6 +427,7 @@ Task("Default")
     .IsDependentOn("Restore")
     .IsDependentOn("StyleXaml")
     .IsDependentOn("Build")
+    .IsDependentOn("Test")
     ;
 
 Task("package")

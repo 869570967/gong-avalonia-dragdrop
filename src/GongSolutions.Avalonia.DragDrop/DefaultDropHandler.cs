@@ -14,7 +14,7 @@ public class DefaultDropHandler : IDropTarget
     public virtual void DragOver(IDropInfo dropInfo)
     {
         dropInfo.Effects = CanAcceptData(dropInfo)
-            ? DragDrop.ShouldCopy ? DragDropEffects.Copy : DragDropEffects.Move
+            ? dropInfo.IsExternal || dropInfo.IsCopyRequested ? DragDropEffects.Copy : DragDropEffects.Move
             : DragDropEffects.None;
     }
 
@@ -25,9 +25,12 @@ public class DefaultDropHandler : IDropTarget
             return;
         }
 
-        var data = ExtractData(dropInfo.Data).ToList();
-        var insertIndex = Math.Clamp(dropInfo.InsertIndex, 0, destination.Count);
-        var copy = dropInfo.Effects.HasFlag(DragDropEffects.Copy);
+        var extractedData = ExtractData(dropInfo.Data);
+        var data = (DragDrop.GetDropTargetItemsSorter(dropInfo.VisualTarget)?.SortDropTargetItems(extractedData) ?? extractedData)
+            .Cast<object>()
+            .ToList();
+        var insertIndex = Math.Clamp(dropInfo.UnfilteredInsertIndex, 0, destination.Count);
+        var copy = dropInfo.IsExternal || dropInfo.Effects.HasFlag(DragDropEffects.Copy);
         var insertedItems = new List<object>();
 
         if (!copy && dropInfo.DragInfo?.SourceCollection is IList source)
@@ -116,22 +119,22 @@ public class DefaultDropHandler : IDropTarget
 
     public static bool CanAcceptData(IDropInfo dropInfo)
     {
-        if (dropInfo.DragInfo is null
-            || dropInfo.Data is null
+        if (dropInfo.Data is null
             || dropInfo.TargetCollection is not IList { IsReadOnly: false, IsFixedSize: false }
             || !dropInfo.IsSameDragDropContextAsSource)
         {
             return false;
         }
 
-        if (!DragDrop.ShouldCopy
-            && dropInfo.DragInfo.SourceCollection is IList source
+        if (!dropInfo.IsExternal
+            && !dropInfo.IsCopyRequested
+            && dropInfo.DragInfo?.SourceCollection is IList source
             && (source.IsReadOnly || source.IsFixedSize))
         {
             return false;
         }
 
-        if (dropInfo.DragInfo.VisualSourceItem is TreeViewItem sourceItem
+        if (dropInfo.DragInfo?.VisualSourceItem is TreeViewItem sourceItem
             && dropInfo.VisualTargetItem is TreeViewItem targetItem)
         {
             if (targetItem.GetVisualAncestors().Contains(sourceItem))
@@ -148,7 +151,7 @@ public class DefaultDropHandler : IDropTarget
 
         var targetType = GetCollectionElementType(dropInfo.TargetCollection.GetType());
          var data = ExtractData(dropInfo.Data).ToList();
-         return (!DragDrop.ShouldCopy || data.All(item => item is not Control || item is ICloneable))
+           return (!dropInfo.IsCopyRequested || data.All(item => item is not Control || item is ICloneable))
                && (targetType is null || data.All(item => IsCompatible(item, targetType)));
     }
 

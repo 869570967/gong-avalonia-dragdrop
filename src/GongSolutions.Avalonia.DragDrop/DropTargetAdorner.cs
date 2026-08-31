@@ -4,45 +4,72 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Media;
 
 namespace GongSolutions.Avalonia.DragDrop;
 
-internal sealed class DropTargetAdorner : Panel
+public sealed class DropTargetAdorner : Panel, IDropTargetAdorner
 {
-    private readonly TextBlock previewText;
+    private readonly ContentControl dataPreview;
+    private readonly ContentControl effectPreview;
+    private readonly TextBlock hintText;
     private readonly Border preview;
     private readonly DropIndicator indicator;
     private IDropInfo? dropInfo;
 
-    public DropTargetAdorner()
+    public DropTargetAdorner(Control target)
     {
         IsHitTestVisible = false;
-        indicator = new DropIndicator();
-        previewText = new TextBlock
+        indicator = new DropIndicator(DragDrop.GetDropTargetAdornerBrush(target));
+        dataPreview = new ContentControl
         {
+            ContentTemplate = DragDrop.GetDragPreviewTemplate(target)
+        };
+        effectPreview = new ContentControl
+        {
+            ContentTemplate = DragDrop.GetEffectPreviewTemplate(target)
+        };
+        hintText = new TextBlock
+        {
+            Text = DragDrop.GetDropHintText(target),
             Foreground = Brushes.White,
-            FontSize = 12,
-            MaxWidth = 220,
-            TextTrimming = TextTrimming.CharacterEllipsis
+            FontSize = 11
         };
         preview = new Border
         {
             Background = new SolidColorBrush(Color.FromArgb(224, 31, 41, 55)),
             CornerRadius = new CornerRadius(4),
             Padding = new Thickness(8, 5),
-            Child = previewText
+            Child = new StackPanel
+            {
+                Spacing = 2,
+                Children =
+                {
+                    dataPreview,
+                    effectPreview,
+                    hintText
+                }
+            }
         };
         Children.Add(indicator);
         Children.Add(preview);
     }
 
+    public Control Visual => this;
+
     public void Update(IDropInfo value)
     {
         dropInfo = value;
         indicator.DropInfo = value;
-        previewText.Text = GetPreviewText(value.Data);
+        if (value.DragInfo is { } dragInfo)
+        {
+            dataPreview.ContentTemplate ??= DragDrop.GetDragPreviewTemplate(dragInfo.VisualSource);
+            effectPreview.ContentTemplate ??= DragDrop.GetEffectPreviewTemplate(dragInfo.VisualSource);
+        }
+        dataPreview.Content = dataPreview.ContentTemplate is null ? GetPreviewText(value.Data) : value.Data;
+        effectPreview.Content = value.Effects.HasFlag(global::Avalonia.Input.DragDropEffects.Copy) ? "Copy" : "Move";
         InvalidateMeasure();
         InvalidateVisual();
     }
@@ -81,7 +108,13 @@ internal sealed class DropTargetAdorner : Panel
 
     private sealed class DropIndicator : Control
     {
+        private readonly IBrush accent;
         private IDropInfo? dropInfo;
+
+        public DropIndicator(IBrush accent)
+        {
+            this.accent = accent;
+        }
 
         public IDropInfo? DropInfo
         {
@@ -107,11 +140,9 @@ internal sealed class DropTargetAdorner : Panel
                 ? header.Bounds.Height
                 : targetItem.Bounds.Height;
             var bounds = new Rect(origin, new Size(targetItem.Bounds.Width, height));
-            var accent = new SolidColorBrush(Color.FromRgb(37, 99, 235));
-
             if (DropInfo.InsertPosition.HasFlag(RelativeInsertPosition.TargetItemCenter))
             {
-                context.DrawRectangle(new SolidColorBrush(Color.FromArgb(48, 37, 99, 235)), new Pen(accent, 2), bounds);
+                context.DrawRectangle(null, new Pen(accent, 2), bounds);
                 return;
             }
 
