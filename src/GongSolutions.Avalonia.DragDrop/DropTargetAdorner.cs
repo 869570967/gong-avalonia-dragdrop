@@ -110,6 +110,7 @@ public sealed class DropTargetAdorner : Panel, IDropTargetAdorner
 
     private sealed class DropIndicator : Control
     {
+        private const double TriangleSize = 5;
         private readonly IBrush accent;
         private IDropInfo? dropInfo;
 
@@ -158,20 +159,51 @@ public sealed class DropTargetAdorner : Panel, IDropTargetAdorner
                 return;
             }
 
+            Point start;
+            Point end;
             if (DropInfo.IsHorizontal)
             {
                 var x = DropInfo.InsertPosition.HasFlag(RelativeInsertPosition.AfterTargetItem)
                     ? bounds.Right
                     : bounds.Left;
-                context.DrawLine(new Pen(accent, 2), new Point(x, bounds.Top), new Point(x, bounds.Bottom));
+                start = new Point(x, bounds.Top);
+                end = new Point(x, bounds.Bottom);
             }
             else
             {
                 var y = DropInfo.InsertPosition.HasFlag(RelativeInsertPosition.AfterTargetItem)
                     ? bounds.Bottom
                     : bounds.Top;
-                context.DrawLine(new Pen(accent, 2), new Point(bounds.Left, y), new Point(bounds.Right, y));
+                start = new Point(bounds.Left, y);
+                end = new Point(bounds.Right, y);
             }
+
+            context.DrawLine(new Pen(accent, 2), start, end);
+            DrawTriangle(context, start, end);
+            DrawTriangle(context, end, start);
+        }
+
+        private void DrawTriangle(DrawingContext context, Point origin, Point opposite)
+        {
+            var vector = opposite - origin;
+            var length = Math.Sqrt((vector.X * vector.X) + (vector.Y * vector.Y));
+            if (length == 0)
+            {
+                return;
+            }
+
+            var direction = vector / length;
+            var perpendicular = new Vector(-direction.Y, direction.X);
+            var geometry = new StreamGeometry();
+            using (var geometryContext = geometry.Open())
+            {
+                geometryContext.BeginFigure(origin + (direction * TriangleSize), true);
+                geometryContext.LineTo(origin + (perpendicular * TriangleSize));
+                geometryContext.LineTo(origin - (perpendicular * TriangleSize));
+                geometryContext.EndFigure(true);
+            }
+
+            context.DrawGeometry(accent, null, geometry);
         }
     }
 }
