@@ -94,7 +94,7 @@ public sealed class DropInfo : IDropInfo
                 TargetItem = itemsParent?.ItemFromContainer(treeViewItem) ?? treeViewItem.DataContext;
                 InsertIndex = itemsParent?.IndexFromContainer(treeViewItem) ?? 0;
 
-                var header = treeViewItem.HeaderPresenter;
+                var header = ItemsControlDragDropHelper.GetTreeViewItemHeader(treeViewItem);
                 if (header is not null)
                 {
                     var position = eventArgs.GetPosition(header);

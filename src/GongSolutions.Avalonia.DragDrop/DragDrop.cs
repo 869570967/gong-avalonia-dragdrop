@@ -350,6 +350,10 @@ public static class DragDrop
 
     private static bool IsDragSourceIgnored(Control source, Visual? eventSource)
     {
+        var isTabHeader = source is TabControl tabControl
+                          && ItemsControlDragDropHelper.FindContainer(tabControl, eventSource) is TabItem tabItem
+                          && ItemsControlDragDropHelper.IsTabHeader(eventSource, tabItem);
+
         for (var visual = eventSource; visual is not null; visual = visual.GetVisualParent())
         {
             if (visual is Control control && GetDragSourceIgnore(control))
@@ -362,7 +366,7 @@ public static class DragDrop
                 break;
             }
 
-            if (visual is TextBox or Button or Slider or ScrollBar or ComboBox or MenuItem)
+            if (!isTabHeader && visual is TextBox or Button or Slider or ScrollBar or ComboBox or MenuItem)
             {
                 return true;
             }

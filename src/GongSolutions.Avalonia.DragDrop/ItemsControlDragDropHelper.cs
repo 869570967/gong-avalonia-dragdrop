@@ -74,8 +74,14 @@ internal static class ItemsControlDragDropHelper
 
     public static bool IsTabHeader(Visual? source, TabItem tabItem)
     {
-        return tabItem.HeaderPresenter is { } header
-               && (ReferenceEquals(source, header) || source?.GetVisualAncestors().Contains(header) == true);
+         return ReferenceEquals(source, tabItem)
+             || source?.GetVisualAncestors().Contains(tabItem) == true;
+    }
+
+    public static Control? GetTreeViewItemHeader(TreeViewItem treeViewItem)
+    {
+        var headerPresenter = treeViewItem.HeaderPresenter;
+        return headerPresenter?.GetVisualParent() as Control ?? headerPresenter;
     }
 
     public static IReadOnlyList<object> GetSelectedItems(ItemsControl itemsControl, object clickedItem)

@@ -87,8 +87,10 @@ public sealed class DropTargetAdorner : Panel, IDropTargetAdorner
             indicator.Arrange(new Rect(finalSize));
             var width = preview.DesiredSize.Width;
             var height = preview.DesiredSize.Height;
-            var left = Math.Clamp(dropInfo.DropPosition.X + 14, 0, Math.Max(0, finalSize.Width - width));
-            var top = Math.Clamp(dropInfo.DropPosition.Y + 14, 0, Math.Max(0, finalSize.Height - height));
+            var position = dropInfo.VisualTarget.TransformToVisual(this)?.Transform(dropInfo.DropPosition)
+                           ?? dropInfo.DropPosition;
+            var left = Math.Clamp(position.X + 14, 0, Math.Max(0, finalSize.Width - width));
+            var top = Math.Clamp(position.Y + 14, 0, Math.Max(0, finalSize.Height - height));
             preview.Arrange(new Rect(left, top, width, height));
         }
 
@@ -129,17 +131,27 @@ public sealed class DropTargetAdorner : Panel, IDropTargetAdorner
         public override void Render(DrawingContext context)
         {
             base.Render(context);
-            if (DropInfo?.VisualTargetItem is not Control targetItem
-                || targetItem.TransformToVisual(DropInfo.VisualTarget) is not { } transform)
+            if (DropInfo?.VisualTargetItem is not Control targetItem)
             {
                 return;
             }
 
-            var origin = transform.Transform(default);
-            var height = targetItem is TreeViewItem { HeaderPresenter: { } header }
-                ? header.Bounds.Height
-                : targetItem.Bounds.Height;
-            var bounds = new Rect(origin, new Size(targetItem.Bounds.Width, height));
+            Rect bounds;
+            if (targetItem is TreeViewItem treeViewItem
+                && ItemsControlDragDropHelper.GetTreeViewItemHeader(treeViewItem) is { } header
+                && header.TransformToVisual(this) is { } headerTransform)
+            {
+                var headerOrigin = headerTransform.Transform(default);
+                bounds = new Rect(headerOrigin, header.Bounds.Size);
+            }
+            else if (targetItem.TransformToVisual(this) is { } transform)
+            {
+                bounds = new Rect(transform.Transform(default), targetItem.Bounds.Size);
+            }
+            else
+            {
+                return;
+            }
             if (DropInfo.InsertPosition.HasFlag(RelativeInsertPosition.TargetItemCenter))
             {
                 context.DrawRectangle(null, new Pen(accent, 2), bounds);

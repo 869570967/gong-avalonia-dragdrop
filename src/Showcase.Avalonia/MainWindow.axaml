@@ -37,8 +37,17 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="SelectionMode" Value="Multiple" />
         </Style>
-        <Style Selector="ListBoxItem">
+        <Style Selector="ListBox.dragList ListBoxItem">
             <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Background" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+        </Style>
+        <Style Selector="ListBox.dragList ListBoxItem:pointerover">
+            <Setter Property="Background" Value="#EFF6FF" />
+        </Style>
+        <Style Selector="ListBox.dragList ListBoxItem:selected">
+            <Setter Property="Background" Value="#DBEAFE" />
         </Style>
         <Style Selector="TreeView.dragTree">
             <Setter Property="MinHeight" Value="320" />
@@ -47,15 +56,44 @@
             <Setter Property="BorderThickness" Value="1" />
         </Style>
         <Style Selector="TreeView.dragTree TreeViewItem">
+            <Setter Property="Background" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
             <Setter Property="IsExpanded" Value="True" />
+        </Style>
+        <Style Selector="TreeView.dragTree TreeViewItem:pointerover">
+            <Setter Property="Background" Value="#EFF6FF" />
+        </Style>
+        <Style Selector="TreeView.dragTree TreeViewItem:selected">
+            <Setter Property="Background" Value="#DBEAFE" />
         </Style>
         <Style Selector="DataGrid.dragGrid">
             <Setter Property="MinHeight" Value="320" />
+            <Setter Property="RowBackground" Value="#FFFFFF" />
             <Setter Property="BorderBrush" Value="#E5E7EB" />
             <Setter Property="BorderThickness" Value="1" />
         </Style>
+        <Style Selector="DataGrid.dragGrid DataGridRow:pointerover">
+            <Setter Property="Background" Value="#EFF6FF" />
+        </Style>
+        <Style Selector="DataGrid.dragGrid DataGridRow:selected">
+            <Setter Property="Background" Value="#DBEAFE" />
+        </Style>
+        <Style Selector="TabControl.dragTabs TabItem">
+            <Setter Property="Background" Value="#FFFFFF" />
+        </Style>
+        <Style Selector="TabControl.dragTabs TabItem:pointerover">
+            <Setter Property="Background" Value="#EFF6FF" />
+        </Style>
+        <Style Selector="TabControl.dragTabs TabItem:selected">
+            <Setter Property="Background" Value="#DBEAFE" />
+        </Style>
         <Style Selector="ItemsControl.dragItems > ContentPresenter">
-            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Background" Value="#FFFFFF" />
+            <Setter Property="Padding" Value="10,0" />
+        </Style>
+        <Style Selector="ItemsControl.dragItems > ContentPresenter:pointerover">
+            <Setter Property="Background" Value="#EFF6FF" />
         </Style>
     </Window.Styles>
 
@@ -151,6 +189,7 @@
                             <TreeView Grid.Row="1"
                                       Classes="dragTree"
                                       dd:DragDrop.DragDropContext="UnboundTree"
+                                      dd:DragDrop.DropHandler="{StaticResource TreeDropHandler}"
                                       dd:DragDrop.IsDragSource="True"
                                       dd:DragDrop.IsDropTarget="True">
                                 <TreeViewItem Header="Workspace" IsExpanded="True">
@@ -224,7 +263,8 @@
             <TabItem Header="Tabs">
                 <Grid Margin="0,12,0,0" RowDefinitions="*,*" RowSpacing="18">
                     <Border Classes="listPanel">
-                        <TabControl ItemsSource="{Binding TabSourceItems}"
+                        <TabControl Classes="dragTabs"
+                                    ItemsSource="{Binding TabSourceItems}"
                                     dd:DragDrop.DragDropContext="Tabs"
                                     dd:DragDrop.IsDragSource="True"
                                     dd:DragDrop.IsDropTarget="True">
@@ -241,7 +281,8 @@
                         </TabControl>
                     </Border>
                     <Border Grid.Row="1" Classes="listPanel">
-                        <TabControl ItemsSource="{Binding TabTargetItems}"
+                        <TabControl Classes="dragTabs"
+                                    ItemsSource="{Binding TabTargetItems}"
                                     dd:DragDrop.DragDropContext="Tabs"
                                     dd:DragDrop.IsDragSource="True"
                                     dd:DragDrop.IsDropTarget="True">
@@ -275,7 +316,10 @@
                                       dd:DragDrop.IsDropTarget="True">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="local:ItemModel">
-                                    <Border BorderBrush="#E5E7EB" BorderThickness="0,0,0,1">
+                                        <Border Padding="0,8"
+                                            Background="Transparent"
+                                            BorderBrush="#E5E7EB"
+                                            BorderThickness="0,0,0,1">
                                         <Grid ColumnDefinitions="60,*">
                                             <TextBlock Foreground="#9CA3AF" Text="{Binding Index}" />
                                             <TextBlock Grid.Column="1" Text="{Binding Caption}" />
