@@ -29,6 +29,8 @@ public class BuildData
     public string Configuration { get; }
     public Verbosity Verbosity { get; }
     public DotNetVerbosity DotNetVerbosity { get; }
+    public string PackageVersion { get; private set; }
+    public string InformationalVersion { get; private set; }
     public bool IsLocalBuild { get; set; }
     public bool IsPullRequest { get; set; }
     public bool IsPrerelease { get; set; }
@@ -46,10 +48,16 @@ public class BuildData
         DotNetVerbosity = dotNetVerbosity;
     }
 
-    public void SetGitVersion(GitVersion gitVersion)
+    public void SetGitVersion(GitVersion gitVersion, string releaseVersion)
     {
         GitVersion = gitVersion;
-        IsPrerelease = GitVersion.NuGetVersion.Contains("-");
+        PackageVersion = string.IsNullOrWhiteSpace(releaseVersion)
+            ? GitVersion.NuGetVersion
+            : releaseVersion.TrimStart('v', 'V');
+        InformationalVersion = string.IsNullOrWhiteSpace(releaseVersion)
+            ? GitVersion.InformationalVersion
+            : PackageVersion;
+        IsPrerelease = PackageVersion.Contains("-");
     }
 }
 
@@ -82,7 +90,10 @@ Setup<BuildData>(ctx =>
     {
         GitVersion(new GitVersionSettings { ToolPath = gitVersionPath, OutputType = GitVersionOutput.BuildServer });
     }
-    buildData.SetGitVersion(GitVersion(new GitVersionSettings { ToolPath = gitVersionPath, OutputType = GitVersionOutput.Json }));
+    buildData.SetGitVersion(
+        GitVersion(new GitVersionSettings { ToolPath = gitVersionPath, OutputType = GitVersionOutput.Json }),
+        EnvironmentVariable("RELEASE_VERSION")
+    );
 
     Information("GitVersion             : {0}", gitVersionPath);
     Information("Branch                 : {0}", buildData.GitVersion.BranchName);
@@ -94,7 +105,7 @@ Setup<BuildData>(ctx =>
     Information("SemVer          Version: {0}", buildData.GitVersion.SemVer);
     Information("AssemblySemVer  Version: {0}", buildData.GitVersion.AssemblySemVer);
     Information("MajorMinorPatch Version: {0}", buildData.GitVersion.MajorMinorPatch);
-    Information("NuGet           Version: {0}", buildData.GitVersion.NuGetVersion);
+    Information("NuGet           Version: {0}", buildData.PackageVersion);
     Information("Verbosity              : {0}", buildData.Verbosity);
     Information("Publish folder         : {0}", publishDir);
 
@@ -132,10 +143,10 @@ Task("Build")
     var msbuildSettings = new DotNetMSBuildSettings
     {
       MaxCpuCount = 0,
-      Version = data.GitVersion.NuGetVersion,
+            Version = data.PackageVersion,
       AssemblyVersion = data.GitVersion.AssemblySemVer,
       FileVersion = data.GitVersion.AssemblySemFileVer,
-      InformationalVersion = data.GitVersion.InformationalVersion,
+            InformationalVersion = data.InformationalVersion,
       ContinuousIntegrationBuild = data.IsRunningOnCI,
       ArgumentCustomization = args => args.Append("/m").Append("/nr:false") // The /nr switch tells msbuild to quite once it's done
     };
@@ -180,10 +191,10 @@ Task("Pack")
     var msbuildSettings = new DotNetMSBuildSettings
     {
       MaxCpuCount = 0,
-      Version = data.GitVersion.NuGetVersion,
+            Version = data.PackageVersion,
       AssemblyVersion = data.GitVersion.AssemblySemVer,
       FileVersion = data.GitVersion.AssemblySemFileVer,
-      InformationalVersion = data.GitVersion.InformationalVersion,
+            InformationalVersion = data.InformationalVersion,
       ContinuousIntegrationBuild = data.IsRunningOnCI
     }
     .WithProperty("IncludeBuildOutput", "true")
@@ -281,7 +292,7 @@ Task("Zip")
     .Does<BuildData>(data =>
 {
     EnsureDirectoryExists(Directory(publishDir));
-    Zip($"./src/Showcase.Avalonia/bin/{data.Configuration}", $"{publishDir}/Showcase.Avalonia.DragDrop.{data.Configuration}-v" + data.GitVersion.NuGetVersion + ".zip");
+    Zip($"./src/Showcase.Avalonia/bin/{data.Configuration}", $"{publishDir}/Showcase.Avalonia.DragDrop.{data.Configuration}-v" + data.PackageVersion + ".zip");
 });
 
 Task("CreateRelease")
