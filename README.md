@@ -51,8 +51,9 @@ complete drop visual. Templates and the adorner brush can be used when only the
 default preview content or insertion styling needs to change.
 
 Single-item drags show a visual copy of the source item by default. Set
-`UseVisualSourceItemPreview="False"` on the drag source to use the text preview
-instead. An explicit `DragPreviewTemplate` takes precedence over either default.
+`UseVisualSourceItemPreview="False"` on the drag source to hide the floating
+drag preview completely. Insertion indicators remain visible. An explicit
+`DragPreviewTemplate` is used while the preview is enabled.
 
 ## External Drops
 

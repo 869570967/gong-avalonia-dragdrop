@@ -65,6 +65,16 @@ public sealed class DropTargetAdorner : Panel, IDropTargetAdorner
     {
         dropInfo = value;
         indicator.DropInfo = value;
+        var showPreview = value.DragInfo is not { } sourceDragInfo
+                          || DragDrop.GetUseVisualSourceItemPreview(sourceDragInfo.VisualSource);
+        preview.IsVisible = showPreview;
+        if (!showPreview)
+        {
+            InvalidateMeasure();
+            InvalidateVisual();
+            return;
+        }
+
         if (value.DragInfo is { } dragInfo)
         {
             dataPreview.ContentTemplate ??= DragDrop.GetDragPreviewTemplate(dragInfo.VisualSource);
