@@ -38,7 +38,7 @@ The main attached properties include:
 - `MinimumHorizontalDragDistance` and `MinimumVerticalDragDistance`
 - `CanDragWithMouseRightButton` and `DragSourceIgnore`
 - `DragDropCopyKeyModifiers`
-- `DragPreviewTemplate`, `EffectPreviewTemplate`, and `DropHintText`
+- `DragPreviewTemplate`, `UseVisualSourceItemPreview`, `EffectPreviewTemplate`, and `DropHintText`
 - `DropTargetAdornerBrush` and `DropTargetAdornerFactory`
 - `DropTargetItemsSorter`, `DropIndexResolver`, and `DropGroupResolver`
 
@@ -49,6 +49,10 @@ additional interactive region that must retain pointer input.
 Implement `IDropTargetAdornerFactory` and `IDropTargetAdorner` to replace the
 complete drop visual. Templates and the adorner brush can be used when only the
 default preview content or insertion styling needs to change.
+
+Single-item drags show a visual copy of the source item by default. Set
+`UseVisualSourceItemPreview="False"` on the drag source to use the text preview
+instead. An explicit `DragPreviewTemplate` takes precedence over either default.
 
 ## External Drops
 

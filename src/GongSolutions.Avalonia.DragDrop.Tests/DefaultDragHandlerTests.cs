@@ -42,6 +42,18 @@ public class DefaultDragHandlerTests
         Assert.Equal(new[] { "second", "first" }, Assert.IsAssignableFrom<IEnumerable<object>>(dragInfo.Data));
     }
 
+    [Fact]
+    public void VisualSourceItemPreviewIsEnabledByDefaultAndCanBeDisabled()
+    {
+        var source = new Border();
+
+        Assert.True(DragDrop.GetUseVisualSourceItemPreview(source));
+
+        DragDrop.SetUseVisualSourceItemPreview(source, false);
+
+        Assert.False(DragDrop.GetUseVisualSourceItemPreview(source));
+    }
+
     private sealed class TestDragInfo(IReadOnlyList<object> sourceItems, IEnumerable sourceCollection) : IDragInfo
     {
         public object? Data { get; set; }

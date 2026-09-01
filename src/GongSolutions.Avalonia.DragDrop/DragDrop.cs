@@ -66,6 +66,9 @@ public static class DragDrop
     public static readonly AttachedProperty<IDataTemplate?> DragPreviewTemplateProperty =
         AvaloniaProperty.RegisterAttached<Control, Control, IDataTemplate?>("DragPreviewTemplate");
 
+    public static readonly AttachedProperty<bool> UseVisualSourceItemPreviewProperty =
+        AvaloniaProperty.RegisterAttached<Control, Control, bool>("UseVisualSourceItemPreview", true);
+
     public static readonly AttachedProperty<IDataTemplate?> EffectPreviewTemplateProperty =
         AvaloniaProperty.RegisterAttached<Control, Control, IDataTemplate?>("EffectPreviewTemplate");
 
@@ -126,6 +129,8 @@ public static class DragDrop
     public static void SetDragSourceIgnore(Control element, bool value) => element.SetValue(DragSourceIgnoreProperty, value);
     public static IDataTemplate? GetDragPreviewTemplate(Control element) => element.GetValue(DragPreviewTemplateProperty);
     public static void SetDragPreviewTemplate(Control element, IDataTemplate? value) => element.SetValue(DragPreviewTemplateProperty, value);
+    public static bool GetUseVisualSourceItemPreview(Control element) => element.GetValue(UseVisualSourceItemPreviewProperty);
+    public static void SetUseVisualSourceItemPreview(Control element, bool value) => element.SetValue(UseVisualSourceItemPreviewProperty, value);
     public static IDataTemplate? GetEffectPreviewTemplate(Control element) => element.GetValue(EffectPreviewTemplateProperty);
     public static void SetEffectPreviewTemplate(Control element, IDataTemplate? value) => element.SetValue(EffectPreviewTemplateProperty, value);
     public static string? GetDropHintText(Control element) => element.GetValue(DropHintTextProperty);

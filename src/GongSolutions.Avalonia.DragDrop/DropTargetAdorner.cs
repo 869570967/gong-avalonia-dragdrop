@@ -12,11 +12,13 @@ namespace GongSolutions.Avalonia.DragDrop;
 
 public sealed class DropTargetAdorner : Panel, IDropTargetAdorner
 {
+    private static readonly IBrush PreviewBackground = new SolidColorBrush(Color.FromArgb(224, 31, 41, 55));
     private readonly ContentControl dataPreview;
     private readonly ContentControl effectPreview;
     private readonly TextBlock hintText;
     private readonly Border preview;
     private readonly DropIndicator indicator;
+    private Control? defaultDataPreview;
     private IDropInfo? dropInfo;
 
     public DropTargetAdorner(Control target)
@@ -39,7 +41,7 @@ public sealed class DropTargetAdorner : Panel, IDropTargetAdorner
         };
         preview = new Border
         {
-            Background = new SolidColorBrush(Color.FromArgb(224, 31, 41, 55)),
+            Background = PreviewBackground,
             CornerRadius = new CornerRadius(4),
             Padding = new Thickness(8, 5),
             Child = new StackPanel
@@ -68,10 +70,49 @@ public sealed class DropTargetAdorner : Panel, IDropTargetAdorner
             dataPreview.ContentTemplate ??= DragDrop.GetDragPreviewTemplate(dragInfo.VisualSource);
             effectPreview.ContentTemplate ??= DragDrop.GetEffectPreviewTemplate(dragInfo.VisualSource);
         }
-        dataPreview.Content = dataPreview.ContentTemplate is null ? GetPreviewText(value.Data) : value.Data;
+        var defaultPreview = dataPreview.ContentTemplate is null ? GetDefaultPreview(value) : null;
+        dataPreview.Content = dataPreview.ContentTemplate is not null
+            ? value.Data
+            : (object?)defaultPreview ?? GetPreviewText(value.Data);
         effectPreview.Content = value.Effects.HasFlag(global::Avalonia.Input.DragDropEffects.Copy) ? "Copy" : "Move";
+        var showOnlyItem = defaultPreview is not null;
+        preview.Background = showOnlyItem ? null : PreviewBackground;
+        preview.Padding = showOnlyItem ? default : new Thickness(8, 5);
+        effectPreview.IsVisible = !showOnlyItem;
+        hintText.IsVisible = !showOnlyItem;
         InvalidateMeasure();
         InvalidateVisual();
+    }
+
+    private Control? GetDefaultPreview(IDropInfo value)
+    {
+        if (value.DragInfo is not { } dragInfo
+            || !DragDrop.GetUseVisualSourceItemPreview(dragInfo.VisualSource))
+        {
+            return null;
+        }
+
+        if (defaultDataPreview is not null)
+        {
+            return defaultDataPreview;
+        }
+
+        if (dragInfo.SourceItems.Count != 1
+            || dragInfo.VisualSourceItem is not { } sourceItem
+            || sourceItem.Bounds.Width <= 0
+            || sourceItem.Bounds.Height <= 0)
+        {
+            return null;
+        }
+
+        defaultDataPreview = new Border
+        {
+            Width = sourceItem.Bounds.Width,
+            Height = sourceItem.Bounds.Height,
+            Background = new VisualBrush(sourceItem),
+            Opacity = 0.85
+        };
+        return defaultDataPreview;
     }
 
     protected override Size MeasureOverride(Size availableSize)
