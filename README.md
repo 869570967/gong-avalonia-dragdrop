@@ -39,7 +39,7 @@ The main attached properties include:
 - `CanDragWithMouseRightButton` and `DragSourceIgnore`
 - `DragDropCopyKeyModifiers`
 - `DragPreviewTemplate`, `UseVisualSourceItemPreview`, `EffectPreviewTemplate`, and `DropHintText`
-- `DropTargetAdornerBrush` and `DropTargetAdornerFactory`
+- `DropTargetAdornerBrush`, `ShowDropTargetIndicator`, and `DropTargetAdornerFactory`
 - `DropTargetItemsSorter`, `DropIndexResolver`, and `DropGroupResolver`
 
 Text boxes, buttons, sliders, scroll bars, combo boxes, and menu items inside an
@@ -54,6 +54,10 @@ Single-item drags show a visual copy of the source item by default. Set
 `UseVisualSourceItemPreview="False"` on the drag source to hide the floating
 drag preview completely. Insertion indicators remain visible. An explicit
 `DragPreviewTemplate` is used while the preview is enabled.
+
+Set `ShowDropTargetIndicator="False"` on a drop target to hide its insertion
+line, endpoint triangles, and center highlight without changing the floating
+drag preview.
 
 ## External Drops
 

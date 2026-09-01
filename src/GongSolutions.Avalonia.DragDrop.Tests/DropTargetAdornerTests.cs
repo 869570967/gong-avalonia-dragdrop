@@ -12,6 +12,22 @@ namespace GongSolutions.Avalonia.DragDrop.Tests;
 public sealed class DropTargetAdornerTests
 {
     [AvaloniaFact]
+    public void DropTargetIndicator_IsEnabledByDefaultAndCanBeDisabled()
+    {
+        var source = new Border();
+        var target = new Border();
+        var adorner = new DropTargetAdorner(target);
+
+        Assert.True(DragDrop.GetShowDropTargetIndicator(target));
+
+        DragDrop.SetShowDropTargetIndicator(target, false);
+        adorner.Update(new TestDropInfo(target, new TestDragInfo(source)));
+
+        Assert.False(adorner.Children[0].IsVisible);
+        Assert.True(adorner.Children[1].IsVisible);
+    }
+
+    [AvaloniaFact]
     public void DisabledVisualSourceItemPreview_HidesFloatingPreview()
     {
         var source = new Border();

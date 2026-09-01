@@ -78,6 +78,9 @@ public static class DragDrop
     public static readonly AttachedProperty<IBrush> DropTargetAdornerBrushProperty =
         AvaloniaProperty.RegisterAttached<Control, IBrush>("DropTargetAdornerBrush", typeof(DragDrop), new SolidColorBrush(Color.FromRgb(37, 99, 235)));
 
+    public static readonly AttachedProperty<bool> ShowDropTargetIndicatorProperty =
+        AvaloniaProperty.RegisterAttached<Control, bool>("ShowDropTargetIndicator", typeof(DragDrop), true);
+
     public static readonly AttachedProperty<IDropTargetAdornerFactory?> DropTargetAdornerFactoryProperty =
         AvaloniaProperty.RegisterAttached<Control, IDropTargetAdornerFactory?>("DropTargetAdornerFactory", typeof(DragDrop));
 
@@ -137,6 +140,8 @@ public static class DragDrop
     public static void SetDropHintText(Control element, string? value) => element.SetValue(DropHintTextProperty, value);
     public static IBrush GetDropTargetAdornerBrush(Control element) => element.GetValue(DropTargetAdornerBrushProperty);
     public static void SetDropTargetAdornerBrush(Control element, IBrush value) => element.SetValue(DropTargetAdornerBrushProperty, value);
+    public static bool GetShowDropTargetIndicator(Control element) => element.GetValue(ShowDropTargetIndicatorProperty);
+    public static void SetShowDropTargetIndicator(Control element, bool value) => element.SetValue(ShowDropTargetIndicatorProperty, value);
     public static IDropTargetAdornerFactory? GetDropTargetAdornerFactory(Control element) => element.GetValue(DropTargetAdornerFactoryProperty);
     public static void SetDropTargetAdornerFactory(Control element, IDropTargetAdornerFactory? value) => element.SetValue(DropTargetAdornerFactoryProperty, value);
     public static IDropTargetItemsSorter? GetDropTargetItemsSorter(Control element) => element.GetValue(DropTargetItemsSorterProperty);
