@@ -22,73 +22,73 @@ public static class DragDrop
     private static readonly ConditionalWeakTable<IDataTransfer, DragSession> TransferSessions = new();
 
     public static readonly AttachedProperty<bool> IsDragSourceProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, bool>("IsDragSource");
+        AvaloniaProperty.RegisterAttached<Control, bool>("IsDragSource", typeof(DragDrop));
 
     public static readonly AttachedProperty<bool> IsDropTargetProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, bool>("IsDropTarget");
+        AvaloniaProperty.RegisterAttached<Control, bool>("IsDropTarget", typeof(DragDrop));
 
     public static readonly AttachedProperty<IDragSource?> DragHandlerProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, IDragSource?>("DragHandler");
+        AvaloniaProperty.RegisterAttached<Control, IDragSource?>("DragHandler", typeof(DragDrop));
 
     public static readonly AttachedProperty<IDropTarget?> DropHandlerProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, IDropTarget?>("DropHandler");
+        AvaloniaProperty.RegisterAttached<Control, IDropTarget?>("DropHandler", typeof(DragDrop));
 
     public static readonly AttachedProperty<string?> DragDropContextProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, string?>("DragDropContext");
+        AvaloniaProperty.RegisterAttached<Control, string?>("DragDropContext", typeof(DragDrop));
 
     public static readonly AttachedProperty<IDragInfoBuilder?> DragInfoBuilderProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, IDragInfoBuilder?>("DragInfoBuilder");
+        AvaloniaProperty.RegisterAttached<Control, IDragInfoBuilder?>("DragInfoBuilder", typeof(DragDrop));
 
     public static readonly AttachedProperty<IDropInfoBuilder?> DropInfoBuilderProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, IDropInfoBuilder?>("DropInfoBuilder");
+        AvaloniaProperty.RegisterAttached<Control, IDropInfoBuilder?>("DropInfoBuilder", typeof(DragDrop));
 
     public static readonly AttachedProperty<bool> SelectDroppedItemsProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, bool>("SelectDroppedItems", true);
+        AvaloniaProperty.RegisterAttached<Control, bool>("SelectDroppedItems", typeof(DragDrop), true);
 
     public static readonly AttachedProperty<ScrollingMode> ScrollingModeProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, ScrollingMode>("ScrollingMode", ScrollingMode.Both);
+        AvaloniaProperty.RegisterAttached<Control, ScrollingMode>("ScrollingMode", typeof(DragDrop), ScrollingMode.Both);
 
     public static readonly AttachedProperty<double> MinimumHorizontalDragDistanceProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, double>("MinimumHorizontalDragDistance", 4);
+        AvaloniaProperty.RegisterAttached<Control, double>("MinimumHorizontalDragDistance", typeof(DragDrop), 4);
 
     public static readonly AttachedProperty<double> MinimumVerticalDragDistanceProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, double>("MinimumVerticalDragDistance", 4);
+        AvaloniaProperty.RegisterAttached<Control, double>("MinimumVerticalDragDistance", typeof(DragDrop), 4);
 
     public static readonly AttachedProperty<KeyModifiers> DragDropCopyKeyModifiersProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, KeyModifiers>("DragDropCopyKeyModifiers", KeyModifiers.Control);
+        AvaloniaProperty.RegisterAttached<Control, KeyModifiers>("DragDropCopyKeyModifiers", typeof(DragDrop), KeyModifiers.Control);
 
     public static readonly AttachedProperty<bool> CanDragWithMouseRightButtonProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, bool>("CanDragWithMouseRightButton");
+        AvaloniaProperty.RegisterAttached<Control, bool>("CanDragWithMouseRightButton", typeof(DragDrop));
 
     public static readonly AttachedProperty<bool> DragSourceIgnoreProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, bool>("DragSourceIgnore");
+        AvaloniaProperty.RegisterAttached<Control, bool>("DragSourceIgnore", typeof(DragDrop));
 
     public static readonly AttachedProperty<IDataTemplate?> DragPreviewTemplateProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, IDataTemplate?>("DragPreviewTemplate");
+        AvaloniaProperty.RegisterAttached<Control, IDataTemplate?>("DragPreviewTemplate", typeof(DragDrop));
 
     public static readonly AttachedProperty<bool> UseVisualSourceItemPreviewProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, bool>("UseVisualSourceItemPreview", true);
+        AvaloniaProperty.RegisterAttached<Control, bool>("UseVisualSourceItemPreview", typeof(DragDrop), true);
 
     public static readonly AttachedProperty<IDataTemplate?> EffectPreviewTemplateProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, IDataTemplate?>("EffectPreviewTemplate");
+        AvaloniaProperty.RegisterAttached<Control, IDataTemplate?>("EffectPreviewTemplate", typeof(DragDrop));
 
     public static readonly AttachedProperty<string?> DropHintTextProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, string?>("DropHintText");
+        AvaloniaProperty.RegisterAttached<Control, string?>("DropHintText", typeof(DragDrop));
 
     public static readonly AttachedProperty<IBrush> DropTargetAdornerBrushProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, IBrush>("DropTargetAdornerBrush", new SolidColorBrush(Color.FromRgb(37, 99, 235)));
+        AvaloniaProperty.RegisterAttached<Control, IBrush>("DropTargetAdornerBrush", typeof(DragDrop), new SolidColorBrush(Color.FromRgb(37, 99, 235)));
 
     public static readonly AttachedProperty<IDropTargetAdornerFactory?> DropTargetAdornerFactoryProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, IDropTargetAdornerFactory?>("DropTargetAdornerFactory");
+        AvaloniaProperty.RegisterAttached<Control, IDropTargetAdornerFactory?>("DropTargetAdornerFactory", typeof(DragDrop));
 
     public static readonly AttachedProperty<IDropTargetItemsSorter?> DropTargetItemsSorterProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, IDropTargetItemsSorter?>("DropTargetItemsSorter");
+        AvaloniaProperty.RegisterAttached<Control, IDropTargetItemsSorter?>("DropTargetItemsSorter", typeof(DragDrop));
 
     public static readonly AttachedProperty<IDropIndexResolver?> DropIndexResolverProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, IDropIndexResolver?>("DropIndexResolver");
+        AvaloniaProperty.RegisterAttached<Control, IDropIndexResolver?>("DropIndexResolver", typeof(DragDrop));
 
     public static readonly AttachedProperty<IDropGroupResolver?> DropGroupResolverProperty =
-        AvaloniaProperty.RegisterAttached<Control, Control, IDropGroupResolver?>("DropGroupResolver");
+        AvaloniaProperty.RegisterAttached<Control, IDropGroupResolver?>("DropGroupResolver", typeof(DragDrop));
 
     public static IDragSource DefaultDragHandler { get; } = new DefaultDragHandler();
     public static IDropTarget DefaultDropHandler { get; } = new DefaultDropHandler();
@@ -170,10 +170,10 @@ public static class DragDrop
 
         if (args.GetNewValue<bool>())
         {
-            control.AddHandler(global::Avalonia.Input.DragDrop.DragEnterEvent, OnDragEnter);
-            control.AddHandler(global::Avalonia.Input.DragDrop.DragOverEvent, OnDragOver);
-            control.AddHandler(global::Avalonia.Input.DragDrop.DragLeaveEvent, OnDragLeave);
-            control.AddHandler(global::Avalonia.Input.DragDrop.DropEvent, OnDrop);
+            control.AddHandler(global::Avalonia.Input.DragDrop.DragEnterEvent, OnDragEnter, RoutingStrategies.Bubble, true);
+            control.AddHandler(global::Avalonia.Input.DragDrop.DragOverEvent, OnDragOver, RoutingStrategies.Bubble, true);
+            control.AddHandler(global::Avalonia.Input.DragDrop.DragLeaveEvent, OnDragLeave, RoutingStrategies.Bubble, true);
+            control.AddHandler(global::Avalonia.Input.DragDrop.DropEvent, OnDrop, RoutingStrategies.Bubble, true);
         }
     }
 
@@ -280,7 +280,7 @@ public static class DragDrop
 
     private static void OnDragOver(object? sender, DragEventArgs args)
     {
-        if (sender is not Control control)
+        if (sender is not Control control || !IsNearestDropTarget(control, args.Source as Visual))
         {
             return;
         }
@@ -297,7 +297,7 @@ public static class DragDrop
 
     private static void OnDragEnter(object? sender, DragEventArgs args)
     {
-        if (sender is not Control control)
+        if (sender is not Control control || !IsNearestDropTarget(control, args.Source as Visual))
         {
             return;
         }
@@ -315,7 +315,7 @@ public static class DragDrop
 
     private static void OnDragLeave(object? sender, DragEventArgs args)
     {
-        if (sender is not Control control)
+        if (sender is not Control control || !IsNearestDropTarget(control, args.Source as Visual))
         {
             return;
         }
@@ -329,7 +329,7 @@ public static class DragDrop
 
     private static void OnDrop(object? sender, DragEventArgs args)
     {
-        if (sender is not Control control)
+        if (sender is not Control control || !IsNearestDropTarget(control, args.Source as Visual))
         {
             return;
         }
@@ -344,6 +344,19 @@ public static class DragDrop
         args.Handled = true;
         CancelAutoExpand(session);
         ClearDropAdorner(session);
+    }
+
+    private static bool IsNearestDropTarget(Control target, Visual? eventSource)
+    {
+        for (var visual = eventSource; visual is not null; visual = visual.GetVisualParent())
+        {
+            if (visual is Control control && GetIsDropTarget(control))
+            {
+                return ReferenceEquals(control, target);
+            }
+        }
+
+        return true;
     }
 
     private static IDropInfo CreateDropInfo(Control control, DragEventArgs args)
